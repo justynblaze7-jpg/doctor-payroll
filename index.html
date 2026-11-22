@@ -203,6 +203,16 @@ body:has(#viewLog:not(.hidden)) footer{display:none}
 main{padding:0 0 24px}
 @media (max-width:640px){ #viewLog .ch{flex-wrap:wrap} #viewLog .ch p{text-align:left;width:100%} }
 
+/* access code modal */
+.mdl{background:var(--card);color:var(--ink);border:1px solid var(--line);border-radius:18px;width:100%;max-width:420px;padding:24px;margin-top:14vh;box-shadow:0 30px 80px rgba(0,0,0,.3);animation:pop .2s ease}
+.mdl-ic{width:44px;height:44px;border-radius:12px;background:var(--accent-bg);color:var(--accent);display:flex;align-items:center;justify-content:center;margin-bottom:12px}
+.mdl h3{margin:0 0 4px;font-size:18px;letter-spacing:-.3px}
+.mdl p{margin:0 0 16px;color:var(--muted);font-size:14px}
+.mdl .row > input{width:100%;padding:11px 12px;border:1px solid var(--line2);border-radius:10px;background:var(--input);color:var(--ink);outline:none;font-size:15px;min-height:44px}
+.mdl .row > input:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-bg)}
+.mdl-act{display:flex;gap:10px;justify-content:flex-end;margin-top:18px}
+@media (max-width:480px){ .mdl{margin-top:8vh} .mdl-act .btn{flex:1} }
+
 /* slip: always light for printing */
 .overlay{position:fixed;inset:0;background:rgba(0,0,0,.45);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);display:flex;align-items:flex-start;justify-content:center;padding:24px 12px;overflow:auto;z-index:50}
 .slip{--card:#fff;--card2:#FAFAFA;--line:#EAEAEA;--ink:#0A0A0A;--muted:#737373;--hover:#F5F5F5;--pri:#0A0A0A;--pri-ink:#fff;background:#fff;color:#0A0A0A;width:100%;max-width:780px;border-radius:18px;overflow:hidden;box-shadow:0 30px 80px rgba(0,0,0,.3)}
@@ -276,7 +286,6 @@ main{padding:0 0 24px}
                         <div class="fields">
               <div class="row"><label for="fDoctor">Doctor's name</label><select id="fDoctor"><option value="">Select your name</option></select><div class="ferr" id="eDoctor"></div></div>
               <div class="row"><label for="fPeriod">Pay period</label><input id="fPeriod" type="month"><div class="ferr" id="ePeriod"></div></div>
-              <div class="row hidden" id="codeRow"><label for="fCode">Access code</label><input id="fCode" type="password" autocomplete="off" placeholder="Code from admin"><div class="ferr" id="eCode"></div></div>
             </div>
           </div>
 
@@ -377,6 +386,15 @@ main{padding:0 0 24px}
 </main>
 <footer>Patient details are confidential. Use this system for payroll documentation only.</footer>
 
+<div id="codeModal" class="overlay hidden" role="dialog" aria-modal="true" aria-labelledby="codeTitle">
+  <div class="mdl">
+    <div class="mdl-ic"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg></div>
+    <h3 id="codeTitle">Enter access code</h3>
+    <p>Enter the code from your admin to submit this entry.</p>
+    <div class="row"><label for="fCode">Access code</label><input id="fCode" type="password" autocomplete="off" placeholder="Access code"><div class="ferr" id="eCode"></div></div>
+    <div class="mdl-act"><button class="btn sec2" id="codeCancel" type="button">Cancel</button><button class="btn pri" id="codeOk" type="button">Submit entry</button></div>
+  </div>
+</div>
 <div id="slipOverlay" class="overlay hidden"></div>
 
 <script>
@@ -523,7 +541,6 @@ $('#submitBtn').onclick = async () => {
   const bad = (el, text) => { setErr(el, text); if (!first) first = el; };
   if (!p.doctor) bad($('#fDoctor'), 'Please select your name.');
   if (!p.period) bad($('#fPeriod'), 'Please choose the pay period.');
-  if (NEEDS_CODE && !p.code) bad($('#fCode'), 'Please enter the access code.');
   const shiftFields = [['#fMorning','Morning shifts',p.morning],['#fAfternoon','Afternoon shifts',p.afternoon],['#fNight','Night shifts',p.night]];
   let shiftsOk = true;
   shiftFields.forEach(([sel,label,v]) => { if (!Number.isInteger(v) || v < 0 || v > 62){ bad($(sel), label + ' must be a whole number from 0 to 62.'); shiftsOk = false; } });
@@ -548,6 +565,7 @@ $('#submitBtn').onclick = async () => {
     first.scrollIntoView({behavior:'smooth', block:'center'}); first.focus({preventScroll:true});
     return;
   }
+  if (NEEDS_CODE && !p.code) { openCode(); return; }
   const btn = $('#submitBtn'); btn.disabled = true; btn.textContent = 'Submitting…';
   try {
     const res = await apiPost('submit', p);
@@ -555,9 +573,25 @@ $('#submitBtn').onclick = async () => {
     store.set('dp_doctor', p.doctor);
     $('#doneText').innerHTML = `Thank you, <b>${esc(p.doctor)}</b>. Your entry for <b>${esc(monthLabel(p.period))}</b> was saved (${p.morning + p.afternoon + p.night} shifts, ${p.procedures.length} procedure${p.procedures.length===1?'':'s'}).<br>Reference: <b>${esc(res.id)}</b>`;
     $('#formCard').classList.add('hidden'); $('#doneCard').classList.remove('hidden'); window.scrollTo(0,0);
-  } catch (e) { msg('#formMsg', e.message === 'Failed to fetch' ? 'Could not reach the server. Check your internet connection and try again.' : e.message); }
+  } catch (e) {
+    if (NEEDS_CODE && /access code/i.test(e.message)) { $('#fCode').value = ''; openCode('That code is not correct. Please try again.'); }
+    else msg('#formMsg', e.message === 'Failed to fetch' ? 'Could not reach the server. Check your internet connection and try again.' : e.message);
+  }
   finally { btn.disabled = false; btn.textContent = 'Submit'; }
 };
+function openCode(err){
+  $('#codeModal').classList.remove('hidden'); clearErr($('#fCode'));
+  if (err) setErr($('#fCode'), err);
+  setTimeout(() => $('#fCode').focus(), 50);
+}
+function closeCode(){ $('#codeModal').classList.add('hidden'); }
+$('#codeCancel').onclick = closeCode;
+$('#codeModal').addEventListener('click', e => { if (e.target.id === 'codeModal') closeCode(); });
+$('#codeOk').onclick = () => {
+  if (!$('#fCode').value.trim()) return setErr($('#fCode'), 'Please enter the access code.');
+  closeCode(); $('#submitBtn').click();
+};
+$('#fCode').addEventListener('keydown', e => { if (e.key === 'Enter') $('#codeOk').click(); if (e.key === 'Escape') closeCode(); });
 $('#againBtn').onclick = () => { resetForm(true); $('#doneCard').classList.add('hidden'); $('#formCard').classList.remove('hidden'); };
 
 async function loadConfig(){
@@ -567,7 +601,6 @@ async function loadConfig(){
   } catch (e) { msg('#formMsg','Could not load the doctor list. Check your internet connection and refresh.'); }
   $('#fDoctor').innerHTML = '<option value="">Select your name</option>' + DOCTORS.map(d=>`<option>${esc(d)}</option>`).join('');
   const last = store.get('dp_doctor'); if (last && DOCTORS.includes(last)) $('#fDoctor').value = last;
-  $('#codeRow').classList.toggle('hidden', !NEEDS_CODE);
 }
 
 /* ---------------- admin ---------------- */
