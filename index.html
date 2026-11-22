@@ -13,10 +13,10 @@
   --nav:rgba(255,255,255,.82); --glow:transparent; --sh:0 1px 2px rgba(0,0,0,.04),0 6px 20px rgba(0,0,0,.04); --title:#0A0A0A;
 }
 :root[data-theme="dark"]{
-  --bg:#0B0B0F; --dots:#16161D; --card:#121218; --card2:#0E0E13; --line:#23232D; --line2:#2A2A35; --ink:#EDEDEF; --ink2:#C7C7D1; --muted:#8A8A98; --faint:#5C5C6A;
-  --input:#0B0B0F; --hover:#1A1A22; --pri:linear-gradient(90deg,#22D3EE,#818CF8); --pri-ink:#0B0B0F; --accent:#22D3EE; --accent-bg:rgba(34,211,238,.1); --accent-line:rgba(34,211,238,.25);
+  --bg:#24262B; --dots:#2E3036; --card:#2D2F35; --card2:#292B30; --line:#3B3E45; --line2:#464951; --ink:#F1F2F4; --ink2:#D2D4D9; --muted:#A3A6AE; --faint:#7A7D86;
+  --input:#25272C; --hover:#363940; --pri:linear-gradient(90deg,#22D3EE,#818CF8); --pri-ink:#1B1C20; --accent:#22D3EE; --accent-bg:rgba(34,211,238,.1); --accent-line:rgba(34,211,238,.25);
   --amber:#FBBF24; --pink:#F472B6; --indigo:#818CF8; --teal:#22D3EE; --green:#4ADE80; --red:#F87171; --red-bg:rgba(248,113,113,.1); --ok-bg:rgba(74,222,128,.1); --warn-bg:rgba(251,191,36,.12); --warn:#FBBF24;
-  --nav:rgba(11,11,15,.8); --glow:radial-gradient(ellipse 80% 50% at 50% -10%,rgba(99,102,241,.22),transparent 70%); --sh:none; --title:#fff;
+  --nav:rgba(36,38,43,.86); --glow:radial-gradient(ellipse 80% 50% at 50% -10%,rgba(129,140,248,.12),transparent 70%); --sh:none; --title:#fff;
 }
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html,body{margin:0;background:var(--bg);color:var(--ink);font-family:Inter,"Segoe UI",system-ui,-apple-system,Roboto,Helvetica,Arial,sans-serif;font-size:15px;line-height:1.45;-webkit-font-smoothing:antialiased}
@@ -175,6 +175,34 @@ td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
 .login{max-width:440px;margin:60px auto}
 footer{color:var(--faint);font-size:12px;text-align:center;padding:24px 16px}
 
+
+/* compact, fit-to-screen form */
+#viewLog .ph{margin:10px 0 10px}
+#viewLog .lt{font-size:clamp(24px,2.3vw,32px);margin:6px 0 2px}
+#viewLog .formgrid,#viewLog .col{gap:10px}
+#viewLog .card{padding:14px 18px}
+#viewLog .ch{margin:0 0 10px;align-items:center}
+#viewLog .ch p{margin:0;font-size:12.5px;color:var(--muted);text-align:right}
+#viewLog .fields{gap:12px}
+#viewLog .row > input,#viewLog .row > select{min-height:40px;padding:9px 12px}
+#viewLog .tile{padding:10px 12px}
+#viewLog .tl{margin:0 0 2px}
+#viewLog .tv input{font-size:26px}
+#viewLog .stp button{width:30px;height:30px}
+#viewLog .empty{padding:12px 14px;font-size:13.5px;text-align:left}
+#viewLog .submitbar .btn.pri{min-height:46px}
+#viewLog .msg{margin:0}
+footer{padding:12px 16px}
+body:has(#viewLog:not(.hidden)) footer{display:none}
+.tline{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+#viewLog .tline .lt{margin:0}
+#viewLog .lead{margin-top:4px}
+.submitbar .note{margin-right:auto;color:var(--faint);font-size:12.5px}
+.nbin{min-height:56px;padding:6px 0}
+@media (max-width:640px){ .submitbar .note{margin:0;text-align:center} }
+main{padding:0 0 24px}
+@media (max-width:640px){ #viewLog .ch{flex-wrap:wrap} #viewLog .ch p{text-align:left;width:100%} }
+
 /* slip: always light for printing */
 .overlay{position:fixed;inset:0;background:rgba(0,0,0,.45);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);display:flex;align-items:flex-start;justify-content:center;padding:24px 12px;overflow:auto;z-index:50}
 .slip{--card:#fff;--card2:#FAFAFA;--line:#EAEAEA;--ink:#0A0A0A;--muted:#737373;--hover:#F5F5F5;--pri:#0A0A0A;--pri-ink:#fff;background:#fff;color:#0A0A0A;width:100%;max-width:780px;border-radius:18px;overflow:hidden;box-shadow:0 30px 80px rgba(0,0,0,.3)}
@@ -239,14 +267,13 @@ footer{color:var(--faint);font-size:12px;text-align:center;padding:24px 16px}
   <section id="viewLog">
     <div id="formCard">
       <div class="ph">
-        <div><span class="eyebrow" id="periodBadge">This month</span><h1 class="lt">Log your work</h1><p class="lead">Record your shifts and procedures for the pay period. You can submit more than once; everything is added up for payroll.</p></div>
+        <div><div class="tline"><h1 class="lt">Log your work</h1><span class="eyebrow" id="periodBadge">This month</span></div><p class="lead">Record your shifts and procedures for the pay period.</p></div>
       </div>
 
       <div class="formgrid">
         <div class="col">
           <div class="card">
-            <div class="ch"><div><h3>Doctor details</h3><p>Who you are and which month this covers</p></div></div>
-            <div class="fields">
+                        <div class="fields">
               <div class="row"><label for="fDoctor">Doctor's name</label><select id="fDoctor"><option value="">Select your name</option></select><div class="ferr" id="eDoctor"></div></div>
               <div class="row"><label for="fPeriod">Pay period</label><input id="fPeriod" type="month"><div class="ferr" id="ePeriod"></div></div>
               <div class="row hidden" id="codeRow"><label for="fCode">Access code</label><input id="fCode" type="password" autocomplete="off" placeholder="Code from admin"><div class="ferr" id="eCode"></div></div>
@@ -254,7 +281,7 @@ footer{color:var(--faint);font-size:12px;text-align:center;padding:24px 16px}
           </div>
 
           <div class="card">
-            <div class="ch"><div><h3>Shifts &amp; hours</h3><p>Total for the month. At least one shift is required.</p></div></div>
+            <div class="ch"><h3>Shifts &amp; hours</h3><p>Monthly totals · at least one shift required</p></div>
             <div class="tiles">
               <div class="row tile t1"><label class="tl" for="fMorning">Morning</label><div class="tv"><input id="fMorning" type="number" min="0" max="62" inputmode="numeric" value="0"><div class="stp"><button type="button" data-step="-1" data-for="fMorning" aria-label="Fewer morning shifts">−</button><button type="button" data-step="1" data-for="fMorning" aria-label="More morning shifts">+</button></div></div><div class="ferr" id="eMorning"></div></div>
               <div class="row tile t2"><label class="tl" for="fAfternoon">Afternoon</label><div class="tv"><input id="fAfternoon" type="number" min="0" max="62" inputmode="numeric" value="0"><div class="stp"><button type="button" data-step="-1" data-for="fAfternoon" aria-label="Fewer afternoon shifts">−</button><button type="button" data-step="1" data-for="fAfternoon" aria-label="More afternoon shifts">+</button></div></div><div class="ferr" id="eAfternoon"></div></div>
@@ -267,12 +294,12 @@ footer{color:var(--faint);font-size:12px;text-align:center;padding:24px 16px}
 
         <div class="col">
           <div class="card">
-            <div class="ch"><div><h3>Procedures <span class="badge" id="procCount">0</span></h3><p>Add each procedure you performed. All fields are required.</p></div></div>
+            <div class="ch"><h3>Procedures <span class="badge" id="procCount">0</span></h3><button class="btn pri sm" id="addProc" type="button">+ Add procedure</button></div>
             <div id="procList"></div>
-            <button class="addbtn" id="addProc" type="button">+ Add procedure</button>
           </div>
           <div id="formMsg" class="msg"></div>
           <div class="submitbar">
+            <span class="note">Patient details are confidential.</span>
             <button class="btn ghost" id="resetBtn" type="button">Clear form</button>
             <button class="btn pri" id="submitBtn" type="button">Submit entry</button>
           </div>
@@ -452,7 +479,7 @@ function procRow(v = {}){
 }
 function renderEmpty(){
   const list = $('#procList'), has = list.querySelector('.proc'), e = list.querySelector('.empty');
-  if (!has && !e) list.insertAdjacentHTML('afterbegin','<div class="empty">No procedures added yet. Use “Add procedure” for each one you performed.</div>');
+  if (!has && !e) list.insertAdjacentHTML('afterbegin','<div class="empty">No procedures added. Click “Add procedure” for each one you performed; all fields are required.</div>');
   if (has && e) e.remove();
   $('#procCount').textContent = list.querySelectorAll('.proc').length;
 }
