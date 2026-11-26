@@ -232,6 +232,40 @@ main{padding:0 0 24px}
 .slip .ft{display:flex;gap:10px;justify-content:flex-end;padding:0 26px 22px}
 .slip .btn.sec2{background:#F5F5F5;color:#0A0A0A;border-color:#EAEAEA}.slip .btn.pri{background:#0A0A0A;color:#fff}
 
+/* shift covers */
+.notice{display:flex;gap:14px;padding:14px 16px;border-radius:14px;background:var(--warn-bg);border:1px solid var(--warn)}
+.notice .bell{width:34px;height:34px;border-radius:10px;background:var(--card);color:var(--warn);display:flex;align-items:center;justify-content:center;flex:none}
+.notice h4{margin:0 0 4px;font-size:14.5px;color:var(--ink)}
+.notice ul{margin:0;padding-left:18px;font-size:13.5px;color:var(--ink2)}.notice li{margin:2px 0}
+.notice p{margin:6px 0 0;font-size:12.5px;color:var(--muted)}
+.cq{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 0;border-top:1px solid var(--line)}
+.cq:first-of-type{border-top:0;padding-top:0}
+.cq b{font-size:14px;font-weight:600}.cq small{display:block;color:var(--muted);font-size:12.5px}
+.yn{display:inline-flex;border:1px solid var(--line);border-radius:10px;padding:2px;background:var(--card2);flex:none}
+.yn button{border:0;background:transparent;padding:6px 16px;border-radius:8px;font-size:13.5px;font-weight:600;color:var(--muted);cursor:pointer}
+.yn button.on{background:var(--pri);color:var(--pri-ink)}
+.cvlist{display:flex;flex-direction:column;gap:10px;margin-bottom:12px}
+.cvr{display:grid;grid-template-columns:160px 140px 1fr 100px auto;gap:12px;align-items:start;padding:12px;border:1px solid var(--line);border-radius:12px;background:var(--card2)}
+.cvr .row > select,.cvr .row > input{min-height:42px}
+.cvr .x{margin-top:26px;border:0;background:transparent;color:var(--red);font-weight:600;cursor:pointer;padding:10px 4px;font-size:13.5px}
+.cvr .hint{grid-column:1/-1;font-size:12.5px;color:var(--accent);margin-top:-4px}
+.cvr.lock{background:var(--warn-bg);border-color:transparent;align-items:center}
+.cvr.lock small{display:block;color:var(--muted);font-size:12px}.cvr.lock div{font-size:14px}
+.cvr.lock .lk{font-size:12px;font-weight:600;color:var(--warn);white-space:nowrap}
+.addcv{margin-bottom:4px}
+.paysum{display:flex;flex-wrap:wrap;gap:8px 18px;align-items:baseline;margin-top:12px;padding:12px 14px;border:1px dashed var(--line2);border-radius:12px;font-size:14px}
+.paysum > span:first-child{font-weight:650}
+.paysum s{color:var(--faint);margin-right:3px}
+.paysum .warn{flex-basis:100%;color:var(--warn);font-size:12.5px}
+.confirm{display:flex;gap:12px;align-items:flex-start;padding:12px 14px;border:1px solid var(--line);border-radius:14px;background:var(--card);cursor:pointer}
+.confirm input{width:19px;height:19px;margin-top:1px;accent-color:var(--accent);flex:none}
+.confirm b{display:block;font-size:13.5px;font-weight:600}
+.confirm.bad{border-color:var(--red);background:var(--red-bg)}
+.cvtab td small{color:var(--muted)}
+.pill.x{background:var(--red-bg);color:var(--red)}
+@media (max-width:900px){ .cvr{grid-template-columns:1fr 1fr} .cvr .x{margin-top:0;grid-column:1/-1;text-align:left;padding:0} }
+@media (max-width:640px){ .cq{flex-direction:column;align-items:flex-start} }
+
 /* drafts */
 .draftbar{display:flex;align-items:center;gap:14px;padding:12px 14px 12px 16px;border:1px solid var(--accent-line);background:var(--accent-bg);border-radius:14px}
 .draftbar .di{width:34px;height:34px;border-radius:10px;background:var(--card);color:var(--accent);display:flex;align-items:center;justify-content:center;flex:none;border:1px solid var(--accent-line)}
@@ -311,15 +345,30 @@ main{padding:0 0 24px}
             <button class="btn pri sm" id="draftOpen" type="button">Open draft</button>
           </div>
 
+          <div class="notice hidden" id="coverNotice">
+            <span class="bell"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9M13.7 21a2 2 0 0 1-3.4 0"/></svg></span>
+            <div><h4 id="cnTitle"></h4><ul id="cnList"></ul><p>These hours are deducted from your total automatically, so don’t claim them. If this is wrong, contact the admin.</p></div>
+          </div>
+
           <div class="card">
-            <div class="ch"><h3>Shifts &amp; hours</h3><p>Monthly totals · at least one shift required</p></div>
+            <div class="ch"><h3>Shifts on your roster</h3><p>Every shift you were rostered for this month · at least one required</p></div>
             <div class="tiles">
               <div class="row tile t1"><label class="tl" for="fMorning">Morning</label><div class="tv"><input id="fMorning" type="number" min="0" max="62" inputmode="numeric" value="0"><div class="stp"><button type="button" data-step="-1" data-for="fMorning" aria-label="Fewer morning shifts">−</button><button type="button" data-step="1" data-for="fMorning" aria-label="More morning shifts">+</button></div></div><div class="ferr" id="eMorning"></div></div>
               <div class="row tile t2"><label class="tl" for="fAfternoon">Afternoon</label><div class="tv"><input id="fAfternoon" type="number" min="0" max="62" inputmode="numeric" value="0"><div class="stp"><button type="button" data-step="-1" data-for="fAfternoon" aria-label="Fewer afternoon shifts">−</button><button type="button" data-step="1" data-for="fAfternoon" aria-label="More afternoon shifts">+</button></div></div><div class="ferr" id="eAfternoon"></div></div>
               <div class="row tile t3"><label class="tl" for="fNight">Night</label><div class="tv"><input id="fNight" type="number" min="0" max="62" inputmode="numeric" value="0"><div class="stp"><button type="button" data-step="-1" data-for="fNight" aria-label="Fewer night shifts">−</button><button type="button" data-step="1" data-for="fNight" aria-label="More night shifts">+</button></div></div><div class="ferr" id="eNight"></div></div>
-              <div class="row tile t4"><label class="tl" for="fHours">Total hours</label><div class="tv"><input id="fHours" type="number" min="0" max="744" step="0.5" inputmode="decimal" value="0"><span class="unit">hrs</span></div><div class="ferr" id="eHours"></div></div>
+              <div class="row tile t4"><label class="tl" for="fHours">Rostered hours</label><div class="tv"><input id="fHours" type="number" min="0" max="744" step="0.5" inputmode="decimal" value="0"><span class="unit">hrs</span></div><div class="ferr" id="eHours"></div></div>
             </div>
             <div class="grperr" id="eShifts"></div>
+          </div>
+
+          <div class="card" id="coverCard">
+            <div class="ch"><h3>Shift covers</h3></div>
+            <div class="cq"><div><b>Did another doctor cover any of your shifts?</b><small>These come off your total.</small></div><div class="yn" data-g="out"><button type="button" data-yn="0" class="on">No</button><button type="button" data-yn="1">Yes</button></div></div>
+            <div id="lockList" class="cvlist"></div>
+            <div id="outWrap" class="hidden"><div id="outList" class="cvlist"></div><button class="btn sec2 sm addcv" id="addOut" type="button">+ Add another</button></div>
+            <div class="cq"><div><b>Did you cover a shift for another doctor?</b><small>Name the doctor whose shift it was. They’ll be notified and the hours deducted from their total.</small></div><div class="yn" data-g="in"><button type="button" data-yn="0" class="on">No</button><button type="button" data-yn="1">Yes</button></div></div>
+            <div id="inWrap" class="hidden"><div id="inList" class="cvlist"></div><button class="btn sec2 sm addcv" id="addIn" type="button">+ Add another</button></div>
+            <div class="paysum hidden" id="paySum"></div>
           </div>
         </div>
 
@@ -328,6 +377,7 @@ main{padding:0 0 24px}
             <div class="ch"><h3>Procedures <span class="badge" id="procCount">0</span></h3><button class="btn pri sm" id="addProc" type="button">+ Add procedure</button></div>
             <div id="procList"></div>
           </div>
+          <label class="confirm" id="confirmBox"><input type="checkbox" id="fConfirm"><b>I confirm my total does not include any shift another doctor covered for me, and every shift I covered for someone else is listed.</b></label>
           <div id="formMsg" class="msg"></div>
           <div class="submitbar">
             <span class="note">Not finished? Save a draft and come back later.</span>
@@ -381,6 +431,7 @@ main{padding:0 0 24px}
         <div class="tabs">
           <button data-tab="tSummary" class="on">Payroll summary</button>
           <button data-tab="tLog">Master log</button>
+          <button data-tab="tCovers">Shift covers</button>
           <button data-tab="tRates">Pay rates</button>
         </div>
 
@@ -392,6 +443,11 @@ main{padding:0 0 24px}
         <div id="tLog" class="hidden">
           <div class="actions" style="margin-top:0;margin-bottom:12px"><button class="btn sec2 sm" id="csvLog" type="button">Export master log (CSV)</button></div>
           <div class="tw"><table id="logTable"></table></div>
+        </div>
+
+        <div id="tCovers" class="hidden">
+          <div class="actions" style="margin-top:0;margin-bottom:12px"><button class="btn sec2 sm" id="csvCov" type="button">Export covers (CSV)</button></div>
+          <div class="tw"><table id="covTable" class="cvtab"></table></div>
         </div>
 
         <div id="tRates" class="hidden">
@@ -471,14 +527,17 @@ function demoDB(){
   if (!db){
     const rates = {}; SHIFTS.forEach((s,i)=>rates[s]=[5000,6000,10000][i]); PROCS_DEFAULT.forEach((p,i)=>rates[p]=[15000,5000,7000,2000,3000,5000,3000,10000][i]);
     db = { submissions:[], procedures:[], rates,
-      doctors:['Dr. Abdulmanaf','Dr. Aminu','Dr. Eze','Dr. Farouk','Dr. Gola','Dr. Haroon','Dr. Haruna','Dr. Ishaq','Dr. Musa','Dr. Mustapha','Dr. Uche','Dr. Yaseer','Dr. Zarewa','Dr. Zayyad'] };
+      doctors:['Dr. Abdulhaq','Dr. Aminu','Dr. Eze','Dr. Farouk','Dr. Gola','Dr. Haroon','Dr. Haruna','Dr. Ibrahim Abdu','Dr. Ibrahim Khaleel','Dr. Ishaq','Dr. Musa','Dr. Mustapha','Dr. Uche','Dr. Yaseer','Dr. Zarewa','Dr. Zayyad'] };
+    db.covers = [];
     const seed = (doctor, period, m,a,n,h, procs, status) => {
       const id = 'S-' + Math.random().toString(16).slice(2,10).toUpperCase(), ts = period + '-28 18:' + String(10+db.submissions.length).padStart(2,'0');
       db.submissions.push({timestamp:ts,id,doctor,period,morning:m,afternoon:a,night:n,hours:h,procCount:procs.length,status,verifiedAt:''});
       procs.forEach(p=>db.procedures.push({timestamp:ts,id,doctor,period,date:p[0],pid:p[1],patient:p[2],procedure:p[3]}));
+      return {id, ts};
     };
     seed('Dr. Eze','2026-11',0,20,20,280,[['2026-11-04','SSH-10231','Sample Patient One','Cesarean Section Assist'],['2026-11-12','SSH-10408','Sample Patient Two','Suturing']],'Verified');
-    seed('Dr. Ishaq','2026-11',20,0,0,140,[['2026-11-09','SSH-10377','Sample Patient Three','Incision & Drainage (I&D)']],'Pending');
+    const ish = seed('Dr. Ishaq','2026-11',20,0,0,140,[['2026-11-09','SSH-10377','Sample Patient Three','Incision & Drainage (I&D)']],'Pending');
+    db.covers.push({timestamp:ish.ts,id:ish.id,period:'2026-11',date:'2026-11-05',shift:'Morning',owner:'Dr. Uche',by:'Dr. Ishaq',hours:8,recordedBy:'Covering doctor'});
     seed('Dr. Musa','2026-11',22,4,0,178,[],'Verified');
     db.procedures.length; MEM = db; store.set('dp_demo', JSON.stringify(db));
   }
@@ -489,10 +548,17 @@ async function demo(action, p){
   await new Promise(r=>setTimeout(r,150));
   const db = demoDB();
   if (action === 'config') return {ok:true, procedures:PROCS_DEFAULT, doctors:db.doctors, needsCode:false};
+  if (action === 'covers'){ db.covers = db.covers || []; return {ok:true, claims: db.covers.filter(c=>c.period===p.period && c.owner===p.doctor && c.recordedBy==='Covering doctor').map(c=>({date:c.date,shift:c.shift,by:c.by,hours:c.hours}))}; }
   if (action === 'submit'){
+    db.covers = db.covers || [];
+    for (const c of (p.coversIn||[])){ const hit = db.covers.find(r=>r.recordedBy==='Covering doctor'&&r.period===p.period&&r.date===c.date&&r.shift===c.shift&&r.owner===c.owner);
+      if (hit) return {ok:false, error: hit.by===p.doctor ? `You already claimed ${c.owner}'s ${c.shift} shift on ${c.date} in an earlier entry.` : `${hit.by} has already claimed ${c.owner}'s ${c.shift} shift on ${c.date}. Please contact the admin.`}; }
     const id = 'S-' + Math.random().toString(16).slice(2,10).toUpperCase(), ts = new Date().toISOString().slice(0,16).replace('T',' ');
     db.submissions.push({timestamp:ts,id,doctor:p.doctor,period:p.period,morning:+p.morning,afternoon:+p.afternoon,night:+p.night,hours:+p.hours,procCount:p.procedures.length,status:'Pending',verifiedAt:''});
     p.procedures.forEach(x=>db.procedures.push({timestamp:ts,id,doctor:p.doctor,period:p.period,date:x.date,pid:x.pid,patient:x.patient,procedure:x.procedure}));
+    const cts = new Date().toISOString().slice(0,16).replace('T',' ');
+    (p.coversIn||[]).forEach(c=>db.covers.push({timestamp:cts,id,period:p.period,date:c.date,shift:c.shift,owner:c.owner,by:p.doctor,hours:+c.hours,recordedBy:'Covering doctor'}));
+    (p.coversOut||[]).forEach(c=>db.covers.push({timestamp:cts,id,period:p.period,date:c.date,shift:c.shift,owner:p.doctor,by:c.by,hours:+c.hours,recordedBy:'Rostered doctor'}));
     let draftCleared = false; const dk = p.doctor + '|' + p.period;
     if (p.pin && db.drafts && db.drafts[dk] && db.drafts[dk].pin === p.pin){ delete db.drafts[dk]; draftCleared = true; }
     demoSave(); return {ok:true,id,draftCleared};
@@ -513,7 +579,7 @@ async function demo(action, p){
   }
   if (p.key !== 'demo') return {ok:false,error:'Wrong admin key.'};
   if (action === 'login') return {ok:true};
-  if (action === 'data') return {ok:true, submissions:db.submissions, procedures:db.procedures, rates:db.rates, doctors:db.doctors, procedureList:PROCS_DEFAULT};
+  if (action === 'data') return {ok:true, submissions:db.submissions, procedures:db.procedures, covers:db.covers||[], rates:db.rates, doctors:db.doctors, procedureList:PROCS_DEFAULT};
   if (action === 'verify'){ const s = db.submissions.find(x=>x.id===p.id); if(s){ s.status=p.status; s.verifiedAt = p.status==='Verified'?new Date().toISOString().slice(0,16).replace('T',' '):''; } demoSave(); return {ok:true}; }
   if (action === 'saveRates'){ db.rates = Object.assign({}, p.rates); demoSave(); return {ok:true}; }
   return {ok:false,error:'Unknown action'};
@@ -557,6 +623,7 @@ function resetForm(keepDoctor){
   const d = $('#fDoctor').value, per = $('#fPeriod').value;
   ['#fMorning','#fAfternoon','#fNight','#fHours'].forEach(s => $(s).value = 0);
   $('#procList').innerHTML = ''; renderEmpty(); msg('#formMsg'); clearAllErr();
+  setYN('in', false); setYN('out', false); $('#fConfirm').checked = false;
   if (keepDoctor){ $('#fDoctor').value = d; $('#fPeriod').value = per; }
 }
 $('#resetBtn').onclick = () => resetForm(true);
@@ -610,8 +677,20 @@ $('#submitBtn').onclick = async () => {
     if (!x.procedure) bad(f.procedure, 'Please select the procedure performed.');
     p.procedures.push(x);
   });
+  p.coversIn = []; p.coversOut = [];
+  ['in','out'].forEach(k => coverRows(k).forEach(x => {
+    if (!x.date) bad(x.f.date, 'Date is required.');
+    else if (p.period && x.date.slice(0,7) !== p.period) bad(x.f.date, 'Date must be in ' + monthLabel(p.period) + '.');
+    if (!x.shift) bad(x.f.shift, 'Choose the shift.');
+    if (!x.doc) bad(x.f.doc, 'Choose the doctor.');
+    if (!(x.hours > 0 && x.hours <= 24)) bad(x.f.hours, 'Enter hours (1 to 24).');
+    if (k === 'out' && x.date && x.shift && CLAIMS.some(c => c.date === x.date && c.shift === x.shift)) bad(x.f.date, 'Already deducted above.');
+    if (k === 'in') p.coversIn.push({date:x.date, shift:x.shift, owner:x.doc, hours:x.hours});
+    else p.coversOut.push({date:x.date, shift:x.shift, by:x.doc, hours:x.hours});
+  }));
+  if (!$('#fConfirm').checked){ $('#confirmBox').classList.add('bad'); if (!first) first = $('#fConfirm'); }
   if (first){
-    msg('#formMsg', 'Please correct the fields marked in red before submitting.');
+    msg('#formMsg', !$('#fConfirm').checked && !document.querySelector('#formCard .bad:not(#confirmBox)') ? 'Please tick the confirmation before submitting.' : 'Please correct the fields marked in red before submitting.');
     first.scrollIntoView({behavior:'smooth', block:'center'}); first.focus({preventScroll:true});
     return;
   }
@@ -622,7 +701,7 @@ $('#submitBtn').onclick = async () => {
     const res = await apiPost('submit', p);
     if (!res.ok) throw new Error(res.error || 'Could not submit.');
     store.set('dp_doctor', p.doctor);
-    $('#doneText').innerHTML = `Thank you, <b>${esc(p.doctor)}</b>. Your entry for <b>${esc(monthLabel(p.period))}</b> was saved (${p.morning + p.afternoon + p.night} shifts, ${p.procedures.length} procedure${p.procedures.length===1?'':'s'}).${res.draftCleared ? ' Your saved draft has been cleared.' : ''}<br>Reference: <b>${esc(res.id)}</b>`;
+    $('#doneText').innerHTML = `Thank you, <b>${esc(p.doctor)}</b>. Your entry for <b>${esc(monthLabel(p.period))}</b> was saved (${p.morning + p.afternoon + p.night} shifts, ${p.procedures.length} procedure${p.procedures.length===1?'':'s'}).${p.coversIn.length ? ' ' + [...new Set(p.coversIn.map(c=>c.owner))].join(', ') + ' will be notified that the hours you covered are deducted from their total.' : ''}${res.draftCleared ? ' Your saved draft has been cleared.' : ''}<br>Reference: <b>${esc(res.id)}</b>`;
     if (res.draftCleared){ DRAFT = {exists:false}; renderDraftBar(); }
     $('#formCard').classList.add('hidden'); $('#doneCard').classList.remove('hidden'); window.scrollTo(0,0);
   } catch (e) {
@@ -644,7 +723,74 @@ $('#codeOk').onclick = () => {
   closeCode(); $('#submitBtn').click();
 };
 $('#fCode').addEventListener('keydown', e => { if (e.key === 'Enter') $('#codeOk').click(); if (e.key === 'Escape') closeCode(); });
-$('#againBtn').onclick = () => { resetForm(true); $('#doneCard').classList.add('hidden'); $('#formCard').classList.remove('hidden'); checkDraft(); };
+$('#againBtn').onclick = () => { resetForm(true); $('#doneCard').classList.add('hidden'); $('#formCard').classList.remove('hidden'); checkDraft(); loadClaims(); };
+
+/* ---------------- shift covers ---------------- */
+const CSH = ['Morning','Afternoon','Night'];
+let CLAIMS = [], claimTok = 0;
+const dLabel = d => { const x = new Date(d + 'T00:00'); return isNaN(x) ? d : x.toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short'}); };
+function docOpts(sel){ const me = $('#fDoctor').value; return '<option value="">Select doctor</option>' + DOCTORS.filter(d => d !== me).map(d => `<option${d===sel?' selected':''}>${esc(d)}</option>`).join(''); }
+function coverRow(kind, v = {}){
+  const div = document.createElement('div'); div.className = 'cvr'; div.dataset.kind = kind;
+  div.innerHTML = `<div class="row"><label>Date</label><input type="date" class="cDate" value="${esc(v.date||'')}"><div class="ferr"></div></div>
+    <div class="row"><label>Shift</label><select class="cShift"><option value="">Select</option>${CSH.map(x=>`<option${x===v.shift?' selected':''}>${x}</option>`).join('')}</select><div class="ferr"></div></div>
+    <div class="row"><label>${kind === 'in' ? 'Doctor whose shift you covered' : 'Covered by'}</label><select class="cDoc">${docOpts(v.doc)}</select><div class="ferr"></div></div>
+    <div class="row"><label>Hours</label><input type="number" class="cHrs" min="0" max="24" step="0.5" inputmode="decimal" placeholder="0" value="${esc(v.hours||'')}"><div class="ferr"></div></div>
+    <button class="x" type="button">Remove</button>${kind === 'in' ? '<div class="hint"></div>' : ''}`;
+  const per = $('#fPeriod').value; if (/^\d{4}-\d{2}$/.test(per)){ const [y,m] = per.split('-').map(Number); div.querySelector('.cDate').min = per + '-01'; div.querySelector('.cDate').max = per + '-' + String(new Date(y, m, 0).getDate()).padStart(2,'0'); }
+  div.querySelectorAll('input,select').forEach(el => { el.addEventListener('input', () => { clearErr(el); updPay(); }); el.addEventListener('change', () => { clearErr(el); updPay(); }); });
+  div.querySelector('.x').onclick = () => { const k = div.dataset.kind; div.remove(); if (!$('#' + k + 'List').children.length) setYN(k, false); updPay(); };
+  return div;
+}
+function coverRows(kind){
+  if ($('#' + kind + 'Wrap').classList.contains('hidden')) return [];
+  return [...document.querySelectorAll('#' + kind + 'List .cvr')].map(r => { const f = {date:r.querySelector('.cDate'), shift:r.querySelector('.cShift'), doc:r.querySelector('.cDoc'), hours:r.querySelector('.cHrs')};
+    return {r, f, date:f.date.value, shift:f.shift.value, doc:f.doc.value, hours:Number(f.hours.value)||0}; });
+}
+function setYN(g, on, noRow){
+  document.querySelectorAll(`.yn[data-g="${g}"] button`).forEach(b => b.classList.toggle('on', (b.dataset.yn === '1') === on));
+  $('#' + g + 'Wrap').classList.toggle('hidden', !on);
+  if (!on) $('#' + g + 'List').innerHTML = '';
+  else if (!noRow && !$('#' + g + 'List').children.length) $('#' + g + 'List').appendChild(coverRow(g));
+  updPay();
+}
+document.querySelectorAll('.yn').forEach(y => y.querySelectorAll('button').forEach(b => b.onclick = () => setYN(y.dataset.g, b.dataset.yn === '1')));
+$('#addIn').onclick = () => { $('#inList').appendChild(coverRow('in')); updPay(); };
+$('#addOut').onclick = () => { $('#outList').appendChild(coverRow('out')); updPay(); };
+$('#fConfirm').addEventListener('change', () => { $('#confirmBox').classList.remove('bad'); if (!document.querySelector('#formCard .bad')) msg('#formMsg'); });
+function renderClaims(){
+  const n = CLAIMS.length, tot = CLAIMS.reduce((t,c) => t + (+c.hours||0), 0);
+  $('#coverNotice').classList.toggle('hidden', !n);
+  $('#cnTitle').textContent = n === 1 ? `${CLAIMS[0].by} has claimed ${CLAIMS[0].hours} hours for covering your shift` : `${n} of your shifts were claimed by other doctors (${tot} hours)`;
+  $('#cnList').innerHTML = CLAIMS.map(c => `<li><b>${esc(c.by)}</b> covered your <b>${esc(c.shift)}</b> shift on <b>${esc(dLabel(c.date))}</b> · ${esc(c.hours)} hrs will be deducted</li>`).join('');
+  $('#lockList').innerHTML = CLAIMS.map(c => `<div class="cvr lock"><div><small>Date</small>${esc(dLabel(c.date))}</div><div><small>Shift</small>${esc(c.shift)}</div><div><small>Covered by</small><b>${esc(c.by)}</b></div><div><small>Hours</small>−${esc(c.hours)}</div><span class="lk">🔒 Claimed by ${esc(c.by)}</span></div>`).join('');
+  updPay();
+}
+async function loadClaims(){
+  const doctor = $('#fDoctor').value, period = $('#fPeriod').value, tok = ++claimTok;
+  CLAIMS = []; renderClaims();
+  if (!doctor || !/^\d{4}-\d{2}$/.test(period)) return;
+  try { const r = await apiPost('covers', {doctor, period}); if (tok === claimTok && r.ok){ CLAIMS = r.claims || []; renderClaims(); } } catch (e) {}
+}
+function refreshCoverDocs(){ document.querySelectorAll('.cvr .cDoc').forEach(s => { const v = s.value; s.innerHTML = docOpts(v); if (v === $('#fDoctor').value) s.value = ''; }); }
+$('#fDoctor').addEventListener('change', () => { refreshCoverDocs(); loadClaims(); });
+$('#fPeriod').addEventListener('change', loadClaims);
+function updPay(){
+  const ded = {Morning:0,Afternoon:0,Night:0}, add = {Morning:0,Afternoon:0,Night:0}; let dh = 0, ah = 0;
+  CLAIMS.forEach(c => { if (c.shift in ded) ded[c.shift]++; dh += +c.hours || 0; });
+  coverRows('out').forEach(x => { if (x.shift) ded[x.shift]++; dh += x.hours; });
+  coverRows('in').forEach(x => { if (x.shift) add[x.shift]++; ah += x.hours;
+    const h = x.r.querySelector('.hint'); if (h) h.textContent = x.doc ? `${x.doc} will be notified that ${x.hours ? x.hours + ' hours' : 'these hours'}${x.date ? ' on ' + dLabel(x.date) : ''} are deducted from their total.` : ''; });
+  const any = dh || ah || Object.values(ded).some(Boolean) || Object.values(add).some(Boolean);
+  const box = $('#paySum'); box.classList.toggle('hidden', !any); if (!any) return;
+  const ids = {Morning:'#fMorning', Afternoon:'#fAfternoon', Night:'#fNight'}; let over = [];
+  const part = CSH.map(x => { const r = Number($(ids[x]).value)||0, net = r - ded[x] + add[x]; if (r - ded[x] < 0) over.push(x.toLowerCase());
+    return `<span>${x} ${ded[x]||add[x] ? `<s>${r}</s>` : ''}<b>${Math.max(net,0)}</b></span>`; }).join('');
+  const rh = Number($('#fHours').value)||0;
+  box.innerHTML = `<span>Payable this month</span>${part}<span>Hours ${dh||ah ? `<s>${rh}</s>` : ''}<b>${Math.max(rh-dh+ah,0)}</b></span><span style="color:var(--muted);font-size:12.5px">(−${dh} hrs covered for you, +${ah} hrs you covered)</span>${over.length ? `<span class="warn">More ${over.join(', ')} shifts were covered for you than are on your roster. Check your roster numbers.</span>` : ''}`;
+}
+['#fMorning','#fAfternoon','#fNight','#fHours'].forEach(sel => $(sel).addEventListener('input', updPay));
+document.addEventListener('click', e => { if (e.target.closest('[data-step]')) setTimeout(updPay); });
 
 /* ---------------- drafts ---------------- */
 // DRAFT: {exists, savedAt, procCount, pin (set once opened or saved in this visit), doctor, period}
@@ -680,12 +826,17 @@ $('#fPeriod').addEventListener('change', checkDraft);
 function draftData(){
   return { morning: $('#fMorning').value, afternoon: $('#fAfternoon').value, night: $('#fNight').value, hours: $('#fHours').value,
     procedures: [...document.querySelectorAll('#procList .proc')].map(r => ({ date: r.querySelector('.pDate').value, pid: r.querySelector('.pPid').value.trim(),
-      patient: r.querySelector('.pName').value.trim(), procedure: r.querySelector('.pProc').value })) };
+      patient: r.querySelector('.pName').value.trim(), procedure: r.querySelector('.pProc').value })),
+    coversIn: coverRows('in').map(x => ({date:x.date, shift:x.shift, owner:x.doc, hours:x.f.hours.value})),
+    coversOut: coverRows('out').map(x => ({date:x.date, shift:x.shift, by:x.doc, hours:x.f.hours.value})) };
 }
 function fillFromDraft(d){
   clearAllErr(); msg('#formMsg');
   $('#fMorning').value = d.morning || 0; $('#fAfternoon').value = d.afternoon || 0; $('#fNight').value = d.night || 0; $('#fHours').value = d.hours || 0;
   $('#procList').innerHTML = ''; (d.procedures || []).forEach(x => $('#procList').appendChild(procRow(x))); renderEmpty();
+  [['in','owner'],['out','by']].forEach(([k,who]) => { const list = d[k === 'in' ? 'coversIn' : 'coversOut'] || [];
+    setYN(k, false); if (list.length){ setYN(k, true, true); list.forEach(c => $('#' + k + 'List').appendChild(coverRow(k, {date:c.date, shift:c.shift, doc:c[who], hours:c.hours}))); } });
+  updPay();
 }
 function knownCode(){ return $('#fCode').value || ''; }
 
@@ -816,14 +967,39 @@ function filtered(){
   return { subs, procs: DATA.procedures.filter(x => ids.has(x.id)) };
 }
 
+/* one record per covered shift (period + date + shift + rostered doctor), merged from both doctors' entries */
+function coverSlots(){
+  const m = new Map();
+  (DATA.covers || []).forEach(c => {
+    const k = c.period + '|' + c.date + '|' + c.shift + '|' + c.owner;
+    if (!m.has(k)) m.set(k, {period:c.period, date:c.date, shift:c.shift, owner:c.owner, claim:null, decl:null});
+    const x = m.get(k), slot = c.recordedBy === 'Covering doctor' ? 'claim' : 'decl';
+    if (!x[slot] || String(c.timestamp) >= String(x[slot].timestamp)) x[slot] = c;
+  });
+  return [...m.values()].map(x => Object.assign(x, {
+    by: (x.claim || x.decl).by, hours: (x.claim || x.decl).hours,
+    status: x.claim && x.decl ? (x.claim.by === x.decl.by ? 'matched' : 'disputed') : x.claim ? 'claimed' : 'unclaimed' }))
+    .sort((a,b) => b.period.localeCompare(a.period) || a.date.localeCompare(b.date) || CSH.indexOf(a.shift) - CSH.indexOf(b.shift));
+}
+const SKEY = {Morning:'morning', Afternoon:'afternoon', Night:'night'};
 function summarize(subs, procs, rates){
   const map = new Map();
   subs.forEach(s => {
     const k = s.doctor + '|' + s.period;
-    if (!map.has(k)) map.set(k, {doctor:s.doctor, period:s.period, morning:0, afternoon:0, night:0, hours:0, proc:Object.fromEntries(PROCS.map(p=>[p,0])), subs:0, pending:0});
+    if (!map.has(k)) map.set(k, {doctor:s.doctor, period:s.period, morning:0, afternoon:0, night:0, hours:0, proc:Object.fromEntries(PROCS.map(p=>[p,0])), subs:0, pending:0, covers:[], outN:0, inN:0});
     const g = map.get(k); g.morning += s.morning; g.afternoon += s.afternoon; g.night += s.night; g.hours += s.hours; g.subs++; if (s.status!=='Verified') g.pending++;
   });
   procs.forEach(x => { const g = map.get(x.doctor + '|' + x.period); if (g && x.procedure in g.proc) g.proc[x.procedure]++; });
+  // covers: always deducted from the rostered doctor; paid to the covering doctor only if their entry passes the filter
+  const v = $('#xVerified').checked, okIds = new Set(DATA.submissions.filter(s => !v || s.status === 'Verified').map(s => s.id));
+  map.forEach(g => { g.rostered = {morning:g.morning, afternoon:g.afternoon, night:g.night, hours:g.hours}; });
+  coverSlots().forEach(c => {
+    const own = map.get(c.owner + '|' + c.period), key = SKEY[c.shift];
+    if (own && key){ own[key]--; own.hours -= c.hours; own.outN++; own.covers.push(Object.assign({dir:'out'}, c)); }
+    const cov = c.claim && okIds.has(c.claim.id) ? map.get(c.by + '|' + c.period) : null;
+    if (cov && key){ cov[key]++; cov.hours += c.hours; cov.inN++; cov.covers.push(Object.assign({dir:'in'}, c)); }
+  });
+  map.forEach(g => { ['morning','afternoon','night','hours'].forEach(f => g[f] = Math.max(0, Math.round(g[f]*10)/10)); });
   const out = [...map.values()];
   out.forEach(g => {
     g.shiftPay = g.morning*(rates['Morning Shift']||0) + g.afternoon*(rates['Afternoon Shift']||0) + g.night*(rates['Night Shift']||0);
@@ -837,22 +1013,24 @@ function renderAll(){
   const {subs, procs} = filtered(), rates = DATA.rates;
   const sum = summarize(subs, procs, rates);
   $('#kSubs').textContent = subs.length;
-  $('#kShifts').textContent = subs.reduce((t,s)=>t+s.morning+s.afternoon+s.night,0);
+  $('#kShifts').textContent = sum.reduce((t,g)=>t+g.morning+g.afternoon+g.night,0);
   $('#kProcs').textContent = procs.length;
   $('#kPay').textContent = naira(sum.reduce((t,g)=>t+g.total,0));
 
   // summary table
-  $('#sumTable').innerHTML = `<thead><tr><th>Doctor</th><th>Month</th><th class="num">Morning</th><th class="num">Afternoon</th><th class="num">Night</th><th class="num">Hours</th>${PROCS.map(p=>`<th class="num" title="${esc(p)}">${esc(SHORT[p]||p)}</th>`).join('')}<th class="num">Total payout</th><th></th></tr></thead><tbody>` +
-    (sum.length ? sum.map((g,i)=>`<tr><td><b>${esc(g.doctor)}</b>${g.pending?`<br><span class="pill p">${g.pending} pending</span>`:''}</td><td>${esc(monthLabel(g.period))}</td><td class="num">${g.morning}</td><td class="num">${g.afternoon}</td><td class="num">${g.night}</td><td class="num">${g.hours}</td>${PROCS.map(p=>`<td class="num">${g.proc[p]||'–'}</td>`).join('')}<td class="num money">${naira(g.total)}</td><td><button class="btn pri sm" data-slip="${i}">Slip</button></td></tr>`).join('')
-      : `<tr><td colspan="${8+PROCS.length}" style="text-align:center;color:var(--muted);padding:28px">No entries for this filter.</td></tr>`) + '</tbody>';
+  $('#sumTable').innerHTML = `<thead><tr><th>Doctor</th><th>Month</th><th class="num">Morning</th><th class="num">Afternoon</th><th class="num">Night</th><th class="num">Hours</th><th class="num" title="Shifts covered for them / covers they did">Covers</th>${PROCS.map(p=>`<th class="num" title="${esc(p)}">${esc(SHORT[p]||p)}</th>`).join('')}<th class="num">Total payout</th><th></th></tr></thead><tbody>` +
+    (sum.length ? sum.map((g,i)=>`<tr><td><b>${esc(g.doctor)}</b>${g.pending?`<br><span class="pill p">${g.pending} pending</span>`:''}</td><td>${esc(monthLabel(g.period))}</td><td class="num">${g.morning}</td><td class="num">${g.afternoon}</td><td class="num">${g.night}</td><td class="num">${g.hours}</td><td class="num">${g.outN||g.inN ? `<small>${g.outN?'−'+g.outN:''}${g.outN&&g.inN?' / ':''}${g.inN?'+'+g.inN:''}</small>` : '–'}</td>${PROCS.map(p=>`<td class="num">${g.proc[p]||'–'}</td>`).join('')}<td class="num money">${naira(g.total)}</td><td><button class="btn pri sm" data-slip="${i}">Slip</button></td></tr>`).join('')
+      : `<tr><td colspan="${9+PROCS.length}" style="text-align:center;color:var(--muted);padding:28px">No entries for this filter.</td></tr>`) + '</tbody>';
   $('#sumTable').querySelectorAll('[data-slip]').forEach(b => b.onclick = () => openSlip(sum[+b.dataset.slip]));
 
   // master log
   const byId = {}; procs.forEach(x => (byId[x.id] = byId[x.id] || []).push(x));
+  const covById = {}; (DATA.covers || []).forEach(c => (covById[c.id] = covById[c.id] || []).push(c));
   const sorted = subs.slice().sort((a,b) => String(b.timestamp).localeCompare(String(a.timestamp)));
-  $('#logTable').innerHTML = `<thead><tr><th>Submitted</th><th>Ref</th><th>Doctor</th><th>Month</th><th class="num">M / A / N</th><th class="num">Hours</th><th>Procedures (date · PID · patient)</th><th>Status</th></tr></thead><tbody>` +
-    (sorted.length ? sorted.map(s => `<tr><td>${esc(s.timestamp)}</td><td><small>${esc(s.id)}</small></td><td><b>${esc(s.doctor)}</b></td><td>${esc(monthLabel(s.period))}</td><td class="num">${s.morning} / ${s.afternoon} / ${s.night}</td><td class="num">${s.hours}</td><td>${(byId[s.id]||[]).length ? `<ul class="plist">${byId[s.id].sort((a,b)=>a.date.localeCompare(b.date)).map(x=>`<li><b>${esc(x.procedure)}</b><br><small>${esc(x.date)} · ${esc(x.pid)} · ${esc(x.patient)}</small></li>`).join('')}</ul>` : '<small style="color:var(--muted)">None</small>'}</td><td><span class="pill ${s.status==='Verified'?'v':'p'}">${esc(s.status)}</span><br><button class="btn ghost sm" data-ver="${esc(s.id)}" data-st="${s.status==='Verified'?'Pending':'Verified'}">${s.status==='Verified'?'Undo':'Verify'}</button></td></tr>`).join('')
-      : `<tr><td colspan="8" style="text-align:center;color:var(--muted);padding:28px">No entries for this filter.</td></tr>`) + '</tbody>';
+  $('#logTable').innerHTML = `<thead><tr><th>Submitted</th><th>Ref</th><th>Doctor</th><th>Month</th><th class="num">M / A / N</th><th class="num">Hours</th><th>Shift covers</th><th>Procedures (date · PID · patient)</th><th>Status</th></tr></thead><tbody>` +
+    (sorted.length ? sorted.map(s => `<tr><td>${esc(s.timestamp)}</td><td><small>${esc(s.id)}</small></td><td><b>${esc(s.doctor)}</b></td><td>${esc(monthLabel(s.period))}</td><td class="num">${s.morning} / ${s.afternoon} / ${s.night}</td><td class="num">${s.hours}</td><td>${covById[s.id] ? `<ul class="plist">${covById[s.id].map(c=>`<li>${c.recordedBy==='Covering doctor' ? `Covered <b>${esc(c.owner)}</b>` : `Covered by <b>${esc(c.by)}</b>`}<br><small>${esc(c.shift)} · ${esc(c.date)} · ${c.hours} hrs</small></li>`).join('')}</ul>` : '<small style="color:var(--muted)">None</small>'}</td><td>${(byId[s.id]||[]).length ? `<ul class="plist">${byId[s.id].sort((a,b)=>a.date.localeCompare(b.date)).map(x=>`<li><b>${esc(x.procedure)}</b><br><small>${esc(x.date)} · ${esc(x.pid)} · ${esc(x.patient)}</small></li>`).join('')}</ul>` : '<small style="color:var(--muted)">None</small>'}</td><td><span class="pill ${s.status==='Verified'?'v':'p'}">${esc(s.status)}</span><br><button class="btn ghost sm" data-ver="${esc(s.id)}" data-st="${s.status==='Verified'?'Pending':'Verified'}">${s.status==='Verified'?'Undo':'Verify'}</button></td></tr>`).join('')
+      : `<tr><td colspan="9" style="text-align:center;color:var(--muted);padding:28px">No entries for this filter.</td></tr>`) + '</tbody>';
+  renderCovers();
   $('#logTable').querySelectorAll('[data-ver]').forEach(b => b.onclick = async () => {
     b.disabled = true; b.textContent = '…';
     const r = await apiPost('verify', {key:adminKey, id:b.dataset.ver, status:b.dataset.st}).catch(e=>({ok:false,error:e.message}));
@@ -862,10 +1040,31 @@ function renderAll(){
   });
 }
 
+/* shift covers tab */
+const COVER_STATUS = {
+  matched: c => `<span class="pill v">Both agree · deducted from ${esc(c.owner)}, paid to ${esc(c.by)}</span>`,
+  claimed: c => `<span class="pill v">Deducted from ${esc(c.owner)}, paid to ${esc(c.by)}</span>`,
+  unclaimed: c => `<span class="pill p">Deducted from ${esc(c.owner)} · ${esc(c.by)} hasn’t claimed it</span>`,
+  disputed: c => `<span class="pill x">Check: ${esc(c.owner)} says ${esc(c.decl.by)} covered, but ${esc(c.claim.by)} claimed it</span>`
+};
+function coversFiltered(){
+  const d = $('#xDoctor').value, p = $('#xPeriod').value;
+  return coverSlots().filter(c => (!p || c.period === p) && (!d || c.owner === d || c.by === d || (c.decl && c.decl.by === d)));
+}
+function renderCovers(){
+  const list = coversFiltered();
+  $('#covTable').innerHTML = `<thead><tr><th>Date</th><th>Shift</th><th>Rostered doctor</th><th>Covered by</th><th class="num">Hours</th><th>Recorded by</th><th>Result</th></tr></thead><tbody>` +
+    (list.length ? list.map(c => `<tr><td>${esc(dLabel(c.date))}<br><small>${esc(monthLabel(c.period))}</small></td><td>${esc(c.shift)}</td><td>${esc(c.owner)}</td><td><b>${esc(c.by)}</b></td><td class="num">${c.hours}</td><td>${[c.claim?'Covering doctor':'', c.decl?'Rostered doctor':''].filter(Boolean).join(' + ')}</td><td>${COVER_STATUS[c.status](c)}</td></tr>`).join('')
+      : `<tr><td colspan="7" style="text-align:center;color:var(--muted);padding:28px">No shift covers for this filter.</td></tr>`) + '</tbody>';
+}
+$('#csvCov').onclick = () => downloadCSV(`shift-covers_${tag()}.csv`, [['Pay period','Date','Shift','Rostered doctor','Covered by','Hours','Recorded by','Result']]
+  .concat(coversFiltered().map(c => [monthLabel(c.period), c.date, c.shift, c.owner, c.by, c.hours, [c.claim?'Covering doctor':'', c.decl?'Rostered doctor':''].filter(Boolean).join(' + '),
+    {matched:'Both agree', claimed:'Claimed by covering doctor', unclaimed:'Not yet claimed by covering doctor', disputed:'Disputed: ' + (c.decl ? c.decl.by : '') + ' vs ' + (c.claim ? c.claim.by : '')}[c.status]])));
+
 /* tabs */
 document.querySelectorAll('.tabs button').forEach(b => b.onclick = () => {
   document.querySelectorAll('.tabs button').forEach(x => x.classList.toggle('on', x===b));
-  ['tSummary','tLog','tRates'].forEach(id => $('#'+id).classList.toggle('hidden', id !== b.dataset.tab));
+  ['tSummary','tLog','tCovers','tRates'].forEach(id => $('#'+id).classList.toggle('hidden', id !== b.dataset.tab));
 });
 
 /* rates */
@@ -889,8 +1088,8 @@ function downloadCSV(name, rows){
 }
 const tag = () => ($('#xPeriod').value || 'all-months') + ($('#xDoctor').value ? '_' + $('#xDoctor').value.replace(/\W+/g,'') : '');
 $('#csvSum').onclick = () => { const {subs,procs} = filtered(); const s = summarize(subs,procs,DATA.rates);
-  downloadCSV(`payroll-summary_${tag()}.csv`, [['Doctor','Month','Morning','Afternoon','Night','Hours',...PROCS,'Shift pay (NGN)','Procedure pay (NGN)','Total payout (NGN)']]
-    .concat(s.map(g => [g.doctor, monthLabel(g.period), g.morning, g.afternoon, g.night, g.hours, ...PROCS.map(p=>g.proc[p]), g.shiftPay, g.procPay, g.total]))); };
+  downloadCSV(`payroll-summary_${tag()}.csv`, [['Doctor','Month','Morning','Afternoon','Night','Hours','Shifts covered for them','Covers they did',...PROCS,'Shift pay (NGN)','Procedure pay (NGN)','Total payout (NGN)']]
+    .concat(s.map(g => [g.doctor, monthLabel(g.period), g.morning, g.afternoon, g.night, g.hours, g.outN, g.inN, ...PROCS.map(p=>g.proc[p]), g.shiftPay, g.procPay, g.total]))); };
 $('#csvLog').onclick = () => { const {subs,procs} = filtered(); const byId = {}; procs.forEach(x => (byId[x.id]=byId[x.id]||[]).push(x));
   const rows = [['Submitted','Ref','Doctor','Month','Morning','Afternoon','Night','Hours','Status','Procedure date','Patient PID','Patient name','Procedure']];
   subs.slice().sort((a,b)=>String(a.timestamp).localeCompare(String(b.timestamp))).forEach(s => {
@@ -914,6 +1113,7 @@ function openSlip(g){
         ${PROCS.filter(p=>g.proc[p]).map(p=>line(p, g.proc[p], r[p]||0)).join('')}
       </tbody></table>
       <div class="total"><span>Total payout due</span><span>${naira(g.total)}</span></div>
+      ${g.covers.length ? `<div class="sec">Shift covers (already reflected above · rostered: ${g.rostered.morning} morning, ${g.rostered.afternoon} afternoon, ${g.rostered.night} night, ${g.rostered.hours} hrs)</div><table><thead><tr><th>Date</th><th>Shift</th><th>Detail</th><th class="num">Hours</th></tr></thead><tbody>${g.covers.sort((a,b)=>a.date.localeCompare(b.date)).map(c=>`<tr><td>${esc(c.date)}</td><td>${esc(c.shift)}</td><td>${c.dir==='out' ? 'Covered by ' + esc(c.by) + ' (deducted)' : 'Covered for ' + esc(c.owner) + ' (added)'}</td><td class="num">${c.dir==='out'?'−':'+'}${c.hours}</td></tr>`).join('')}</tbody></table>` : ''}
       ${plist.length ? `<div class="sec">Procedure details</div><table><thead><tr><th>Date</th><th>Patient PID</th><th>Patient name</th><th>Procedure</th></tr></thead><tbody>${plist.map(x=>`<tr><td>${esc(x.date)}</td><td>${esc(x.pid)}</td><td>${esc(x.patient)}</td><td>${esc(x.procedure)}</td></tr>`).join('')}</tbody></table>` : ''}
       ${g.pending && !v ? `<p style="color:#8A3B12;font-size:13px">Note: ${g.pending} of ${g.subs} submission(s) for this period are not yet verified.</p>` : ''}
       <div class="sign"><div>Doctor's signature</div><div>Verified by</div><div>Accounts</div></div>
@@ -936,7 +1136,7 @@ $('#slipOverlay').addEventListener('click', e => { if (e.target.id === 'slipOver
   const now = new Date(); $('#fPeriod').value = now.getFullYear() + '-' + String(now.getMonth()+1).padStart(2,'0');
   renderEmpty(); setBadge();
   await loadConfig();
-  checkDraft();
+  checkDraft(); loadClaims();
   adminKey = sess.get('dp_key') || '';
   show(location.hash === '#admin' ? 'admin' : 'log');
 })();
