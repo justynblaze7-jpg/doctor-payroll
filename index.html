@@ -232,6 +232,21 @@ main{padding:0 0 24px}
 .slip .ft{display:flex;gap:10px;justify-content:flex-end;padding:0 26px 22px}
 .slip .btn.sec2{background:#F5F5F5;color:#0A0A0A;border-color:#EAEAEA}.slip .btn.pri{background:#0A0A0A;color:#fff}
 
+/* drafts */
+.draftbar{display:flex;align-items:center;gap:14px;padding:12px 14px 12px 16px;border:1px solid var(--accent-line);background:var(--accent-bg);border-radius:14px}
+.draftbar .di{width:34px;height:34px;border-radius:10px;background:var(--card);color:var(--accent);display:flex;align-items:center;justify-content:center;flex:none;border:1px solid var(--accent-line)}
+.draftbar .dt{flex:1;min-width:0}
+.draftbar b{display:block;font-size:14px;font-weight:650}
+.draftbar small{display:block;color:var(--muted);font-size:12.5px}
+.draftbar .btn.ghost{color:var(--red)}
+.draftbar.editing{background:var(--card);border-style:dashed}
+.btn.sec2:hover{background:var(--line)}
+#viewLog .submitbar .btn.sec2{padding-top:12px;padding-bottom:12px}
+.mdl .hint{margin:10px 0 0;font-size:12.5px;color:var(--faint)}
+.mdl .row + .row{margin-top:12px}
+#dPin{letter-spacing:10px;font-size:20px;font-weight:700}
+@media (max-width:640px){ .draftbar{flex-wrap:wrap} .draftbar .btn{width:100%} }
+
 @media (max-width:1250px){ .pgrid{grid-template-columns:1fr 1fr} .rates{grid-template-columns:1fr 1fr} }
 @media (max-width:1000px){ .formgrid{grid-template-columns:1fr} }
 @media (max-width:820px){ .kpis{grid-template-columns:repeat(2,minmax(0,1fr))} .slip .meta{grid-template-columns:1fr 1fr} .rates{grid-template-columns:1fr} }
@@ -289,6 +304,13 @@ main{padding:0 0 24px}
             </div>
           </div>
 
+          <div class="draftbar hidden" id="draftBar">
+            <span class="di"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5M9 13h6M9 17h4"/></svg></span>
+            <div class="dt"><b id="draftTitle"></b><small id="draftSub"></small></div>
+            <button class="btn ghost sm hidden" id="draftDiscard" type="button">Delete draft</button>
+            <button class="btn pri sm" id="draftOpen" type="button">Open draft</button>
+          </div>
+
           <div class="card">
             <div class="ch"><h3>Shifts &amp; hours</h3><p>Monthly totals · at least one shift required</p></div>
             <div class="tiles">
@@ -308,8 +330,9 @@ main{padding:0 0 24px}
           </div>
           <div id="formMsg" class="msg"></div>
           <div class="submitbar">
-            <span class="note">Patient details are confidential.</span>
+            <span class="note">Not finished? Save a draft and come back later.</span>
             <button class="btn ghost" id="resetBtn" type="button">Clear form</button>
+            <button class="btn sec2" id="draftBtn" type="button">Save draft</button>
             <button class="btn pri" id="submitBtn" type="button">Submit entry</button>
           </div>
         </div>
@@ -395,6 +418,17 @@ main{padding:0 0 24px}
     <div class="mdl-act"><button class="btn sec2" id="codeCancel" type="button">Cancel</button><button class="btn pri" id="codeOk" type="button">Submit entry</button></div>
   </div>
 </div>
+<div id="pinModal" class="overlay hidden" role="dialog" aria-modal="true" aria-labelledby="pinTitle">
+  <div class="mdl">
+    <div class="mdl-ic"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/></svg></div>
+    <h3 id="pinTitle">Save draft</h3>
+    <p id="pinText"></p>
+    <div class="row hidden" id="dCodeRow"><label for="dCode">Access code</label><input id="dCode" type="password" autocomplete="off" placeholder="Access code"><div class="ferr"></div></div>
+    <div class="row" id="dPinRow"><label for="dPin" id="dPinLabel">Draft PIN</label><input id="dPin" type="password" inputmode="numeric" maxlength="4" autocomplete="off" placeholder="••••"><div class="ferr"></div></div>
+    <p class="hint" id="pinHint"></p>
+    <div class="mdl-act"><button class="btn sec2" id="pinCancel" type="button">Cancel</button><button class="btn pri" id="pinOk" type="button">Save draft</button></div>
+  </div>
+</div>
 <div id="slipOverlay" class="overlay hidden"></div>
 
 <script>
@@ -459,7 +493,23 @@ async function demo(action, p){
     const id = 'S-' + Math.random().toString(16).slice(2,10).toUpperCase(), ts = new Date().toISOString().slice(0,16).replace('T',' ');
     db.submissions.push({timestamp:ts,id,doctor:p.doctor,period:p.period,morning:+p.morning,afternoon:+p.afternoon,night:+p.night,hours:+p.hours,procCount:p.procedures.length,status:'Pending',verifiedAt:''});
     p.procedures.forEach(x=>db.procedures.push({timestamp:ts,id,doctor:p.doctor,period:p.period,date:x.date,pid:x.pid,patient:x.patient,procedure:x.procedure}));
-    demoSave(); return {ok:true,id};
+    let draftCleared = false; const dk = p.doctor + '|' + p.period;
+    if (p.pin && db.drafts && db.drafts[dk] && db.drafts[dk].pin === p.pin){ delete db.drafts[dk]; draftCleared = true; }
+    demoSave(); return {ok:true,id,draftCleared};
+  }
+  if (action.startsWith('draft')){
+    db.drafts = db.drafts || {};
+    const k = p.doctor + '|' + p.period, d = db.drafts[k];
+    if (action === 'draftStatus') return d ? {ok:true, exists:true, savedAt:d.savedAt, procCount:d.data.procedures.length} : {ok:true, exists:false};
+    if (action === 'draftSave'){
+      if (!/^\d{4}$/.test(String(p.pin||''))) return {ok:false,error:'The PIN must be 4 digits.'};
+      if (d && d.pin !== p.pin) return {ok:false,error:'Wrong PIN for this draft.'};
+      db.drafts[k] = {pin:p.pin, data:p.data, savedAt:new Date().toISOString()}; demoSave(); return {ok:true, savedAt:db.drafts[k].savedAt};
+    }
+    if (!d) return action === 'draftDelete' ? {ok:true} : {ok:false,error:'No saved draft was found for this month.'};
+    if (d.pin !== p.pin) return {ok:false,error:'Wrong PIN for this draft.'};
+    if (action === 'draftLoad') return {ok:true, data:d.data, savedAt:d.savedAt};
+    if (action === 'draftDelete'){ delete db.drafts[k]; demoSave(); return {ok:true}; }
   }
   if (p.key !== 'demo') return {ok:false,error:'Wrong admin key.'};
   if (action === 'login') return {ok:true};
@@ -566,18 +616,20 @@ $('#submitBtn').onclick = async () => {
     return;
   }
   if (NEEDS_CODE && !p.code) { openCode(); return; }
+  p.pin = DRAFT.pin || '';
   const btn = $('#submitBtn'); btn.disabled = true; btn.textContent = 'Submitting…';
   try {
     const res = await apiPost('submit', p);
     if (!res.ok) throw new Error(res.error || 'Could not submit.');
     store.set('dp_doctor', p.doctor);
-    $('#doneText').innerHTML = `Thank you, <b>${esc(p.doctor)}</b>. Your entry for <b>${esc(monthLabel(p.period))}</b> was saved (${p.morning + p.afternoon + p.night} shifts, ${p.procedures.length} procedure${p.procedures.length===1?'':'s'}).<br>Reference: <b>${esc(res.id)}</b>`;
+    $('#doneText').innerHTML = `Thank you, <b>${esc(p.doctor)}</b>. Your entry for <b>${esc(monthLabel(p.period))}</b> was saved (${p.morning + p.afternoon + p.night} shifts, ${p.procedures.length} procedure${p.procedures.length===1?'':'s'}).${res.draftCleared ? ' Your saved draft has been cleared.' : ''}<br>Reference: <b>${esc(res.id)}</b>`;
+    if (res.draftCleared){ DRAFT = {exists:false}; renderDraftBar(); }
     $('#formCard').classList.add('hidden'); $('#doneCard').classList.remove('hidden'); window.scrollTo(0,0);
   } catch (e) {
     if (NEEDS_CODE && /access code/i.test(e.message)) { $('#fCode').value = ''; openCode('That code is not correct. Please try again.'); }
     else msg('#formMsg', e.message === 'Failed to fetch' ? 'Could not reach the server. Check your internet connection and try again.' : e.message);
   }
-  finally { btn.disabled = false; btn.textContent = 'Submit'; }
+  finally { btn.disabled = false; btn.textContent = 'Submit entry'; }
 };
 function openCode(err){
   $('#codeModal').classList.remove('hidden'); clearErr($('#fCode'));
@@ -592,7 +644,125 @@ $('#codeOk').onclick = () => {
   closeCode(); $('#submitBtn').click();
 };
 $('#fCode').addEventListener('keydown', e => { if (e.key === 'Enter') $('#codeOk').click(); if (e.key === 'Escape') closeCode(); });
-$('#againBtn').onclick = () => { resetForm(true); $('#doneCard').classList.add('hidden'); $('#formCard').classList.remove('hidden'); };
+$('#againBtn').onclick = () => { resetForm(true); $('#doneCard').classList.add('hidden'); $('#formCard').classList.remove('hidden'); checkDraft(); };
+
+/* ---------------- drafts ---------------- */
+// DRAFT: {exists, savedAt, procCount, pin (set once opened or saved in this visit), doctor, period}
+let DRAFT = {exists:false}, draftTok = 0, PIN_MODE = '';
+const whenLabel = iso => { const d = new Date(iso); return isNaN(d) ? '' : d.toLocaleString('en-GB',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'}); };
+const plural = (n, w) => n + ' ' + w + (n === 1 ? '' : 's');
+function renderDraftBar(){
+  const bar = $('#draftBar');
+  if (!DRAFT.exists){ bar.classList.add('hidden'); return; }
+  const open = !!DRAFT.pin;
+  bar.classList.remove('hidden'); bar.classList.toggle('editing', open);
+  $('#draftTitle').textContent = open ? 'You’re working on a saved draft' : 'You have a saved draft for ' + monthLabel(DRAFT.period);
+  $('#draftSub').textContent = open
+    ? 'Last saved ' + whenLabel(DRAFT.savedAt) + '. Press “Save draft” to keep changes, or “Submit entry” when it’s complete.'
+    : 'Last saved ' + whenLabel(DRAFT.savedAt) + ' · ' + plural(DRAFT.procCount || 0, 'procedure') + '. Open it to continue where you stopped.';
+  $('#draftOpen').classList.toggle('hidden', open);
+  $('#draftDiscard').classList.toggle('hidden', !open);
+}
+async function checkDraft(){
+  const doctor = $('#fDoctor').value, period = $('#fPeriod').value, tok = ++draftTok;
+  if (DRAFT.pin && DRAFT.doctor === doctor && DRAFT.period === period) return renderDraftBar();
+  DRAFT = {exists:false}; renderDraftBar();
+  if (!doctor || !/^\d{4}-\d{2}$/.test(period)) return;
+  try {
+    const r = await apiPost('draftStatus', {doctor, period});
+    if (tok !== draftTok || !r.ok) return;
+    DRAFT = {exists: !!r.exists, savedAt: r.savedAt, procCount: r.procCount, doctor, period}; renderDraftBar();
+  } catch (e) {}
+}
+$('#fDoctor').addEventListener('change', checkDraft);
+$('#fPeriod').addEventListener('change', checkDraft);
+
+function draftData(){
+  return { morning: $('#fMorning').value, afternoon: $('#fAfternoon').value, night: $('#fNight').value, hours: $('#fHours').value,
+    procedures: [...document.querySelectorAll('#procList .proc')].map(r => ({ date: r.querySelector('.pDate').value, pid: r.querySelector('.pPid').value.trim(),
+      patient: r.querySelector('.pName').value.trim(), procedure: r.querySelector('.pProc').value })) };
+}
+function fillFromDraft(d){
+  clearAllErr(); msg('#formMsg');
+  $('#fMorning').value = d.morning || 0; $('#fAfternoon').value = d.afternoon || 0; $('#fNight').value = d.night || 0; $('#fHours').value = d.hours || 0;
+  $('#procList').innerHTML = ''; (d.procedures || []).forEach(x => $('#procList').appendChild(procRow(x))); renderEmpty();
+}
+function knownCode(){ return $('#fCode').value || ''; }
+
+function openPin(mode, err){
+  PIN_MODE = mode;
+  const T = {
+    new:    ['Save draft', 'Create a 4-digit PIN for this draft. You’ll need it to open the draft later, on this or any other device.', 'Create a 4-digit PIN', 'Save draft', 'Don’t use your bank PIN. Pick something only you will remember.'],
+    save:   ['Update your draft', 'Enter your draft PIN. This replaces your saved draft for ' + monthLabel(DRAFT.period) + ' with what is on the form now.', 'Draft PIN', 'Save draft', 'Forgot your PIN? Ask the admin to delete your draft, then save a new one.'],
+    open:   ['Open your draft', 'Enter the 4-digit PIN you created when you saved this draft.', 'Draft PIN', 'Open draft', 'Forgot your PIN? Ask the admin to delete your draft, then start again.'],
+    discard:['Delete this draft?', 'Your saved draft for ' + monthLabel(DRAFT.period) + ' will be removed. What is on the form now stays until you clear it.', 'Draft PIN', 'Delete draft', '']
+  }[mode];
+  $('#pinTitle').textContent = T[0]; $('#pinText').textContent = T[1]; $('#dPinLabel').textContent = T[2]; $('#pinOk').textContent = T[3]; $('#pinHint').textContent = T[4];
+  $('#pinHint').classList.toggle('hidden', !T[4]);
+  const needPin = !DRAFT.pin || mode === 'new';
+  $('#dPinRow').classList.toggle('hidden', !needPin);
+  $('#dCodeRow').classList.toggle('hidden', !(NEEDS_CODE && !knownCode()));
+  [$('#dPin'), $('#dCode')].forEach(clearErr);
+  if (err) setErr(err.field === 'code' ? $('#dCode') : $('#dPin'), err.text);
+  else { $('#dPin').value = ''; }
+  $('#pinModal').classList.remove('hidden');
+  setTimeout(() => (!$('#dCodeRow').classList.contains('hidden') && !$('#dCode').value ? $('#dCode') : needPin ? $('#dPin') : $('#pinOk')).focus(), 50);
+}
+function closePin(){ $('#pinModal').classList.add('hidden'); }
+$('#pinCancel').onclick = closePin;
+$('#pinModal').addEventListener('click', e => { if (e.target.id === 'pinModal') closePin(); });
+['#dPin','#dCode'].forEach(s => { $(s).addEventListener('input', () => clearErr($(s))); $(s).addEventListener('keydown', e => { if (e.key === 'Enter') $('#pinOk').click(); if (e.key === 'Escape') closePin(); }); });
+$('#dPin').addEventListener('input', () => { $('#dPin').value = $('#dPin').value.replace(/\D/g,'').slice(0,4); });
+
+function needIdentity(){
+  clearAllErr(); msg('#formMsg');
+  let ok = true;
+  if (!$('#fDoctor').value){ setErr($('#fDoctor'), 'Please select your name.'); ok = false; }
+  if (!$('#fPeriod').value){ setErr($('#fPeriod'), 'Please choose the pay period.'); ok = false; }
+  if (!ok) msg('#formMsg', 'Choose your name and the pay period before saving a draft.');
+  return ok;
+}
+$('#draftBtn').onclick = () => {
+  if (!needIdentity()) return;
+  const same = DRAFT.doctor === $('#fDoctor').value && DRAFT.period === $('#fPeriod').value;
+  if (DRAFT.pin && same && !(NEEDS_CODE && !knownCode())) return runDraft('save', DRAFT.pin, knownCode());
+  openPin(DRAFT.exists && same ? 'save' : 'new');
+};
+$('#draftOpen').onclick = () => openPin('open');
+$('#draftDiscard').onclick = () => openPin('discard');
+$('#pinOk').onclick = () => {
+  const code = knownCode() || $('#dCode').value.trim();
+  if (NEEDS_CODE && !code) return setErr($('#dCode'), 'Please enter the access code.');
+  const pin = $('#dPinRow').classList.contains('hidden') ? DRAFT.pin : $('#dPin').value;
+  if (!/^\d{4}$/.test(pin || '')) return setErr($('#dPin'), 'The PIN must be exactly 4 digits.');
+  closePin(); runDraft(PIN_MODE, pin, code);
+};
+async function runDraft(mode, pin, code){
+  const doctor = $('#fDoctor').value, period = $('#fPeriod').value;
+  const action = {new:'draftSave', save:'draftSave', open:'draftLoad', discard:'draftDelete'}[mode];
+  const btn = mode === 'open' ? $('#draftOpen') : mode === 'discard' ? $('#draftDiscard') : $('#draftBtn'), label = btn.textContent;
+  btn.disabled = true; btn.textContent = mode === 'open' ? 'Opening…' : mode === 'discard' ? 'Deleting…' : 'Saving…';
+  try {
+    const payload = {doctor, period, code, pin};
+    if (action === 'draftSave') payload.data = draftData();
+    const r = await apiPost(action, payload);
+    if (!r.ok) throw new Error(r.error || 'Something went wrong.');
+    if (code && !$('#fCode').value) $('#fCode').value = code;
+    if (mode === 'discard'){
+      DRAFT = {exists:false}; renderDraftBar(); msg('#formMsg', 'Draft deleted.', 'ok');
+    } else {
+      const n = mode === 'open' ? ((r.data && r.data.procedures) || []).length : document.querySelectorAll('#procList .proc').length;
+      if (mode === 'open') fillFromDraft(r.data || {});
+      DRAFT = {exists:true, savedAt:r.savedAt, procCount:n, pin, doctor, period}; renderDraftBar();
+      msg('#formMsg', mode === 'open' ? 'Draft opened. Continue where you stopped, then save again or submit.' : 'Draft saved at ' + new Date(r.savedAt).toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'}) + '. You can come back and finish it any time.', 'ok');
+    }
+  } catch (e) {
+    const m = e.message === 'Failed to fetch' ? 'Could not reach the server. Check your internet connection and try again.' : e.message;
+    if (/access code/i.test(m)){ $('#fCode').value = ''; $('#dCode').value = ''; openPin(mode, {field:'code', text:'That code is not correct. Please try again.'}); }
+    else if (/wrong pin/i.test(m)){ if (DRAFT.pin) DRAFT.pin = ''; openPin(mode, {field:'pin', text:'That PIN is not correct. Please try again.'}); }
+    else msg('#formMsg', m);
+  } finally { btn.disabled = false; btn.textContent = label; }
+}
 
 async function loadConfig(){
   try {
@@ -766,6 +936,7 @@ $('#slipOverlay').addEventListener('click', e => { if (e.target.id === 'slipOver
   const now = new Date(); $('#fPeriod').value = now.getFullYear() + '-' + String(now.getMonth()+1).padStart(2,'0');
   renderEmpty(); setBadge();
   await loadConfig();
+  checkDraft();
   adminKey = sess.get('dp_key') || '';
   show(location.hash === '#admin' ? 'admin' : 'log');
 })();
