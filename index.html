@@ -495,8 +495,8 @@ const HOSPITAL = "Standard Specialist Hospital";
 
 const DEMO = !API_URL;
 const SHIFTS = ['Morning Shift','Afternoon Shift','Night Shift'];
-const PROCS_DEFAULT = ['Cesarean Section Assist','Episiotomy/Episiorrhaphy','Cervical Laceration Repair','Ear Syringing','Suturing','Incision & Drainage (I&D)','IUD Removal','Manual Vacuum Aspiration (MVA)'];
-const SHORT = {'Cesarean Section Assist':'CS Assist','Episiotomy/Episiorrhaphy':'Episiotomy','Cervical Laceration Repair':'Cervical Repair','Ear Syringing':'Ear Syringing','Suturing':'Suturing','Incision & Drainage (I&D)':'I&D','IUD Removal':'IUD Removal','Manual Vacuum Aspiration (MVA)':'MVA'};
+const PROCS_DEFAULT = ['Cesarean Section Assist','Episiotomy/Episiorrhaphy','Cervical Laceration Repair','Ear Syringing','Suturing','Incision & Drainage (I&D)','IUD Removal','Manual Vacuum Aspiration (MVA)','Perineorrhaphy','Other Assisted Surgeries'];
+const SHORT = {'Cesarean Section Assist':'CS Assist','Episiotomy/Episiorrhaphy':'Episiotomy','Cervical Laceration Repair':'Cervical Repair','Ear Syringing':'Ear Syringing','Suturing':'Suturing','Incision & Drainage (I&D)':'I&D','IUD Removal':'IUD Removal','Manual Vacuum Aspiration (MVA)':'MVA','Perineorrhaphy':'Perineorrhaphy','Other Assisted Surgeries':'Other Assists'};
 let PROCS = PROCS_DEFAULT.slice(), DOCTORS = [], NEEDS_CODE = false;
 let adminKey = '', DATA = null, RATE_DRAFT = {};
 
@@ -525,7 +525,7 @@ function demoDB(){
   if (MEM) return MEM;
   let db = null; try{ db = JSON.parse(store.get('dp_demo') || 'null'); }catch(e){}
   if (!db){
-    const rates = {}; SHIFTS.forEach((s,i)=>rates[s]=[5000,6000,10000][i]); PROCS_DEFAULT.forEach((p,i)=>rates[p]=[15000,5000,7000,2000,3000,5000,3000,10000][i]);
+    const rates = {}; SHIFTS.forEach((s,i)=>rates[s]=[5000,6000,10000][i]); PROCS_DEFAULT.forEach((p,i)=>rates[p]=[15000,5000,7000,2000,3000,5000,3000,10000,7000,15000][i]);
     db = { submissions:[], procedures:[], rates,
       doctors:['Dr. Abdulhaq','Dr. Aminu','Dr. Eze','Dr. Farouk','Dr. Gola','Dr. Haroon','Dr. Haruna','Dr. Ibrahim Abdu','Dr. Ibrahim Khaleel','Dr. Ishaq','Dr. Musa','Dr. Mustapha','Dr. Uche','Dr. Yaseer','Dr. Zarewa','Dr. Zayyad'] };
     db.covers = [];
