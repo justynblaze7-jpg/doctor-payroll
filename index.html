@@ -232,6 +232,20 @@ main{padding:0 0 24px}
 .slip .ft{display:flex;gap:10px;justify-content:flex-end;padding:0 26px 22px}
 .slip .btn.sec2{background:#F5F5F5;color:#0A0A0A;border-color:#EAEAEA}.slip .btn.pri{background:#0A0A0A;color:#fff}
 
+/* preauthorization upload */
+.pre{grid-column:1/-1}
+.up{display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:10px 12px;border:1px dashed var(--line2);border-radius:12px;background:var(--card);min-height:56px}
+.up.uped{border-style:solid;border-color:var(--ok-line, var(--line));background:var(--ok-bg)}
+.up .th{width:40px;height:40px;border-radius:8px;object-fit:cover;background:var(--card2);border:1px solid var(--line);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:var(--muted);flex:none}
+.up .st{flex:1;min-width:150px;font-size:13.5px;color:var(--muted)}
+.up .st b{display:block;color:var(--ink);font-weight:600;font-size:13.5px;word-break:break-all}
+.up.uped .st{color:var(--green)}
+.up .upbtn.bad{outline:2px solid var(--red);outline-offset:2px}
+.up .lnk{border:0;background:transparent;color:var(--muted);font-weight:600;cursor:pointer;font-size:13px;padding:6px 4px}
+.up .lnk.rm{color:var(--red)}
+.plist a{color:var(--accent);font-weight:600;font-size:12.5px;text-decoration:none}
+.plist a:hover{text-decoration:underline}
+
 /* shift covers */
 .notice{display:flex;gap:14px;padding:14px 16px;border-radius:14px;background:var(--warn-bg);border:1px solid var(--warn)}
 .notice .bell{width:34px;height:34px;border-radius:10px;background:var(--card);color:var(--warn);display:flex;align-items:center;justify-content:center;flex:none}
@@ -497,7 +511,8 @@ const DEMO = !API_URL;
 const SHIFTS = ['Morning Shift','Afternoon Shift','Night Shift'];
 const PROCS_DEFAULT = ['Cesarean Section Assist','Episiotomy/Episiorrhaphy','Cervical Laceration Repair','Ear Syringing','Suturing','Incision & Drainage (I&D)','IUD Removal','Manual Vacuum Aspiration (MVA)','Perineorrhaphy','Other Assisted Surgeries'];
 const SHORT = {'Cesarean Section Assist':'CS Assist','Episiotomy/Episiorrhaphy':'Episiotomy','Cervical Laceration Repair':'Cervical Repair','Ear Syringing':'Ear Syringing','Suturing':'Suturing','Incision & Drainage (I&D)':'I&D','IUD Removal':'IUD Removal','Manual Vacuum Aspiration (MVA)':'MVA','Perineorrhaphy':'Perineorrhaphy','Other Assisted Surgeries':'Other Assists'};
-let PROCS = PROCS_DEFAULT.slice(), DOCTORS = [], NEEDS_CODE = false;
+let PROCS = PROCS_DEFAULT.slice(), DOCTORS = [], NEEDS_CODE = false, PREAUTH_EXEMPT = ['Episiotomy/Episiorrhaphy'];
+const needsPreauth = proc => !!proc && !PREAUTH_EXEMPT.includes(proc);
 let adminKey = '', DATA = null, RATE_DRAFT = {};
 
 const $ = s => document.querySelector(s);
@@ -548,14 +563,16 @@ async function demo(action, p){
   await new Promise(r=>setTimeout(r,150));
   const db = demoDB();
   if (action === 'config') return {ok:true, procedures:PROCS_DEFAULT, doctors:db.doctors, needsCode:false};
+  if (action === 'upload'){ if (!p.data) return {ok:false,error:'The file is empty.'}; return {ok:true, id:'demo-' + Math.random().toString(36).slice(2,10)}; }
   if (action === 'covers'){ db.covers = db.covers || []; return {ok:true, claims: db.covers.filter(c=>c.period===p.period && c.owner===p.doctor && c.recordedBy==='Covering doctor').map(c=>({date:c.date,shift:c.shift,by:c.by,hours:c.hours}))}; }
   if (action === 'submit'){
     db.covers = db.covers || [];
+    for (const x of (p.procedures||[])) if (needsPreauth(x.procedure) && !x.preauth) return {ok:false, error:`Please upload the preauthorization picture for ${x.procedure} (${x.pid}).`};
     for (const c of (p.coversIn||[])){ const hit = db.covers.find(r=>r.recordedBy==='Covering doctor'&&r.period===p.period&&r.date===c.date&&r.shift===c.shift&&r.owner===c.owner);
       if (hit) return {ok:false, error: hit.by===p.doctor ? `You already claimed ${c.owner}'s ${c.shift} shift on ${c.date} in an earlier entry.` : `${hit.by} has already claimed ${c.owner}'s ${c.shift} shift on ${c.date}. Please contact the admin.`}; }
     const id = 'S-' + Math.random().toString(16).slice(2,10).toUpperCase(), ts = new Date().toISOString().slice(0,16).replace('T',' ');
     db.submissions.push({timestamp:ts,id,doctor:p.doctor,period:p.period,morning:+p.morning,afternoon:+p.afternoon,night:+p.night,hours:+p.hours,procCount:p.procedures.length,status:'Pending',verifiedAt:''});
-    p.procedures.forEach(x=>db.procedures.push({timestamp:ts,id,doctor:p.doctor,period:p.period,date:x.date,pid:x.pid,patient:x.patient,procedure:x.procedure}));
+    p.procedures.forEach(x=>db.procedures.push({timestamp:ts,id,doctor:p.doctor,period:p.period,date:x.date,pid:x.pid,patient:x.patient,procedure:x.procedure,preauth:x.preauth?'#demo-file':''}));
     const cts = new Date().toISOString().slice(0,16).replace('T',' ');
     (p.coversIn||[]).forEach(c=>db.covers.push({timestamp:cts,id,period:p.period,date:c.date,shift:c.shift,owner:c.owner,by:p.doctor,hours:+c.hours,recordedBy:'Covering doctor'}));
     (p.coversOut||[]).forEach(c=>db.covers.push({timestamp:cts,id,period:p.period,date:c.date,shift:c.shift,owner:p.doctor,by:c.by,hours:+c.hours,recordedBy:'Rostered doctor'}));
@@ -606,10 +623,70 @@ function procRow(v = {}){
       <div class="row"><label>Patient PID</label><input type="text" class="pPid" maxlength="40" placeholder="e.g. SSH-10231" value="${esc(v.pid||'')}"><div class="ferr"></div></div>
       <div class="row"><label>Patient full name</label><input type="text" class="pName" maxlength="120" placeholder="Full name" value="${esc(v.patient||'')}"><div class="ferr"></div></div>
       <div class="row"><label>Procedure performed</label><select class="pProc"><option value="">Select procedure</option>${PROCS.map(p=>`<option${p===v.procedure?' selected':''}>${esc(p)}</option>`).join('')}</select><div class="ferr"></div></div>
+      <div class="row pre"><label>Preauthorization picture</label>
+        <div class="up"><span class="th">IMG</span><div class="st">Take a photo or choose a picture of the signed preauthorization (or a PDF).</div>
+          <input type="file" class="pFile" accept="image/*,application/pdf" hidden>
+          <button class="btn sec2 sm upbtn" type="button">Upload picture</button><button class="lnk rm hidden" type="button">Remove</button></div>
+        <div class="ferr"></div></div>
     </div>`;
-  div.querySelectorAll('input,select').forEach(el => el.addEventListener('input', () => clearErr(el)));
+  div.querySelectorAll('input:not(.pFile),select').forEach(el => el.addEventListener('input', () => clearErr(el)));
   div.querySelector('.x').onclick = () => { div.remove(); renderEmpty(); };
+  const sel = div.querySelector('.pProc'), file = div.querySelector('.pFile'), btn = div.querySelector('.upbtn');
+  const syncPre = () => div.querySelector('.pre').classList.toggle('hidden', !!sel.value && !needsPreauth(sel.value));
+  sel.addEventListener('change', syncPre); syncPre();
+  btn.onclick = () => file.click();
+  file.onchange = () => { const f = file.files[0]; file.value = ''; if (f) startUpload(div, f); };
+  div.querySelector('.rm').onclick = () => { div.dataset.preauth = ''; div.dataset.pname = ''; setUpState(div, 'empty'); };
+  if (v.preauth){ div.dataset.preauth = v.preauth; div.dataset.pname = v.preauthName || 'Uploaded file'; setUpState(div, 'done'); }
   return div;
+}
+
+/* ---------- preauthorization upload ---------- */
+function setUpState(div, state, text, thumb){
+  const up = div.querySelector('.up'), st = up.querySelector('.st'), th = up.querySelector('.th'), btn = up.querySelector('.upbtn'), rm = up.querySelector('.rm');
+  up.classList.toggle('uped', state === 'done'); btn.disabled = state === 'busy';
+  rm.classList.toggle('hidden', state !== 'done');
+  if (thumb !== undefined){ if (div._thumbUrl) URL.revokeObjectURL(div._thumbUrl); div._thumbUrl = thumb; }
+  th.outerHTML = div._thumbUrl && state !== 'empty' ? `<img class="th" src="${div._thumbUrl}" alt="">` : `<span class="th">${state === 'done' && /\.pdf$/i.test(div.dataset.pname||'') ? 'PDF' : 'IMG'}</span>`;
+  if (state === 'empty'){ if (div._thumbUrl){ URL.revokeObjectURL(div._thumbUrl); div._thumbUrl = null; up.querySelector('.th').outerHTML = '<span class="th">IMG</span>'; }
+    st.textContent = 'Take a photo or choose a picture of the signed preauthorization (or a PDF).'; btn.textContent = 'Upload picture'; }
+  if (state === 'busy'){ st.innerHTML = `<b>${esc(div.dataset.pname || '')}</b>${esc(text || 'Uploading…')}`; btn.textContent = 'Uploading…'; }
+  if (state === 'done'){ st.innerHTML = `<b>${esc(div.dataset.pname || 'Uploaded file')}</b>✓ Uploaded`; btn.textContent = 'Replace'; clearErr(btn); }
+  div._uploading = state === 'busy';
+}
+// shrink photos before upload: long side 1600px, JPEG. PDFs go as they are (max 5 MB)
+async function prepFile(f){
+  const toB64 = blob => new Promise((ok, no) => { const r = new FileReader(); r.onload = () => ok(String(r.result).split(',')[1]); r.onerror = no; r.readAsDataURL(blob); });
+  if (f.type === 'application/pdf'){ if (f.size > 5*1024*1024) throw new Error('This PDF is larger than 5 MB. Please take a photo of it instead.'); return {mime:'application/pdf', data: await toB64(f), thumb: null}; }
+  let img;
+  try { img = await createImageBitmap(f); }
+  catch (e) { img = await new Promise((ok, no) => { const i = new Image(), u = URL.createObjectURL(f); i.onload = () => ok(i); i.onerror = () => no(new Error('x')); i.src = u; }).catch(() => null); }
+  if (!img) throw new Error('This picture can’t be read. Please take a photo, or choose a JPG or PNG.');
+  const k = Math.min(1, 1600 / Math.max(img.width, img.height)), c = document.createElement('canvas');
+  c.width = Math.round(img.width * k); c.height = Math.round(img.height * k);
+  const g = c.getContext('2d'); g.fillStyle = '#fff'; g.fillRect(0, 0, c.width, c.height); g.drawImage(img, 0, 0, c.width, c.height);
+  const blob = await new Promise(ok => c.toBlob(ok, 'image/jpeg', 0.8));
+  if (!blob) throw new Error('This picture can’t be read. Please take a photo, or choose a JPG or PNG.');
+  return {mime:'image/jpeg', data: await toB64(blob), thumb: URL.createObjectURL(blob)};
+}
+async function startUpload(div, f){
+  const btn = div.querySelector('.upbtn');
+  clearErr(btn);
+  if (!$('#fDoctor').value || !$('#fPeriod').value) return setErr(btn, 'Select your name and the pay period first.');
+  if (NEEDS_CODE && !$('#fCode').value) return openCode(null, () => startUpload(div, f));
+  const name = f.name || 'photo.jpg';
+  div.dataset.pname = name; setUpState(div, 'busy', 'Preparing…');
+  try {
+    const x = await prepFile(f);
+    setUpState(div, 'busy', 'Uploading…', x.thumb || null);
+    const r = await apiPost('upload', {doctor:$('#fDoctor').value, period:$('#fPeriod').value, code:$('#fCode').value, mime:x.mime, data:x.data, name});
+    if (!r.ok) throw new Error(r.error || 'Upload failed.');
+    div.dataset.preauth = r.id; setUpState(div, 'done');
+  } catch (e) {
+    div.dataset.preauth = ''; setUpState(div, 'empty');
+    if (NEEDS_CODE && /access code/i.test(e.message)){ $('#fCode').value = ''; return openCode('That code is not correct. Please try again.', () => startUpload(div, f)); }
+    setErr(btn, e.message === 'Failed to fetch' ? 'Upload failed. Check your internet connection and try again.' : e.message);
+  }
 }
 function renderEmpty(){
   const list = $('#procList'), has = list.querySelector('.proc'), e = list.querySelector('.empty');
@@ -675,6 +752,12 @@ $('#submitBtn').onclick = async () => {
     if (!x.pid) bad(f.pid, 'Patient PID is required.');
     if (!x.patient) bad(f.patient, 'Patient full name is required.');
     if (!x.procedure) bad(f.procedure, 'Please select the procedure performed.');
+    const upb = r.querySelector('.upbtn');
+    if (needsPreauth(x.procedure)){
+      if (r._uploading) bad(upb, 'Please wait for the picture to finish uploading.');
+      else if (!r.dataset.preauth) bad(upb, 'Please upload the preauthorization picture.');
+      x.preauth = r.dataset.preauth || '';
+    }
     p.procedures.push(x);
   });
   p.coversIn = []; p.coversOut = [];
@@ -710,7 +793,9 @@ $('#submitBtn').onclick = async () => {
   }
   finally { btn.disabled = false; btn.textContent = 'Submit entry'; }
 };
-function openCode(err){
+let CODE_NEXT = null;
+function openCode(err, next){
+  CODE_NEXT = next || null; $('#codeOk').textContent = next ? 'Continue' : 'Submit entry';
   $('#codeModal').classList.remove('hidden'); clearErr($('#fCode'));
   if (err) setErr($('#fCode'), err);
   setTimeout(() => $('#fCode').focus(), 50);
@@ -720,7 +805,8 @@ $('#codeCancel').onclick = closeCode;
 $('#codeModal').addEventListener('click', e => { if (e.target.id === 'codeModal') closeCode(); });
 $('#codeOk').onclick = () => {
   if (!$('#fCode').value.trim()) return setErr($('#fCode'), 'Please enter the access code.');
-  closeCode(); $('#submitBtn').click();
+  closeCode(); const next = CODE_NEXT; CODE_NEXT = null;
+  if (next) next(); else $('#submitBtn').click();
 };
 $('#fCode').addEventListener('keydown', e => { if (e.key === 'Enter') $('#codeOk').click(); if (e.key === 'Escape') closeCode(); });
 $('#againBtn').onclick = () => { resetForm(true); $('#doneCard').classList.add('hidden'); $('#formCard').classList.remove('hidden'); checkDraft(); loadClaims(); };
@@ -826,7 +912,7 @@ $('#fPeriod').addEventListener('change', checkDraft);
 function draftData(){
   return { morning: $('#fMorning').value, afternoon: $('#fAfternoon').value, night: $('#fNight').value, hours: $('#fHours').value,
     procedures: [...document.querySelectorAll('#procList .proc')].map(r => ({ date: r.querySelector('.pDate').value, pid: r.querySelector('.pPid').value.trim(),
-      patient: r.querySelector('.pName').value.trim(), procedure: r.querySelector('.pProc').value })),
+      patient: r.querySelector('.pName').value.trim(), procedure: r.querySelector('.pProc').value, preauth: r.dataset.preauth || '', preauthName: r.dataset.pname || '' })),
     coversIn: coverRows('in').map(x => ({date:x.date, shift:x.shift, owner:x.doc, hours:x.f.hours.value})),
     coversOut: coverRows('out').map(x => ({date:x.date, shift:x.shift, by:x.doc, hours:x.f.hours.value})) };
 }
@@ -918,7 +1004,7 @@ async function runDraft(mode, pin, code){
 async function loadConfig(){
   try {
     const c = await apiGet('config');
-    if (c.ok){ PROCS = c.procedures || PROCS; DOCTORS = c.doctors || []; NEEDS_CODE = !!c.needsCode; }
+    if (c.ok){ PROCS = c.procedures || PROCS; DOCTORS = c.doctors || []; NEEDS_CODE = !!c.needsCode; if (Array.isArray(c.preauthExempt)) PREAUTH_EXEMPT = c.preauthExempt; }
   } catch (e) { msg('#formMsg','Could not load the doctor list. Check your internet connection and refresh.'); }
   $('#fDoctor').innerHTML = '<option value="">Select your name</option>' + DOCTORS.map(d=>`<option>${esc(d)}</option>`).join('');
   const last = store.get('dp_doctor'); if (last && DOCTORS.includes(last)) $('#fDoctor').value = last;
@@ -1028,7 +1114,7 @@ function renderAll(){
   const covById = {}; (DATA.covers || []).forEach(c => (covById[c.id] = covById[c.id] || []).push(c));
   const sorted = subs.slice().sort((a,b) => String(b.timestamp).localeCompare(String(a.timestamp)));
   $('#logTable').innerHTML = `<thead><tr><th>Submitted</th><th>Ref</th><th>Doctor</th><th>Month</th><th class="num">M / A / N</th><th class="num">Hours</th><th>Shift covers</th><th>Procedures (date · PID · patient)</th><th>Status</th></tr></thead><tbody>` +
-    (sorted.length ? sorted.map(s => `<tr><td>${esc(s.timestamp)}</td><td><small>${esc(s.id)}</small></td><td><b>${esc(s.doctor)}</b></td><td>${esc(monthLabel(s.period))}</td><td class="num">${s.morning} / ${s.afternoon} / ${s.night}</td><td class="num">${s.hours}</td><td>${covById[s.id] ? `<ul class="plist">${covById[s.id].map(c=>`<li>${c.recordedBy==='Covering doctor' ? `Covered <b>${esc(c.owner)}</b>` : `Covered by <b>${esc(c.by)}</b>`}<br><small>${esc(c.shift)} · ${esc(c.date)} · ${c.hours} hrs</small></li>`).join('')}</ul>` : '<small style="color:var(--muted)">None</small>'}</td><td>${(byId[s.id]||[]).length ? `<ul class="plist">${byId[s.id].sort((a,b)=>a.date.localeCompare(b.date)).map(x=>`<li><b>${esc(x.procedure)}</b><br><small>${esc(x.date)} · ${esc(x.pid)} · ${esc(x.patient)}</small></li>`).join('')}</ul>` : '<small style="color:var(--muted)">None</small>'}</td><td><span class="pill ${s.status==='Verified'?'v':'p'}">${esc(s.status)}</span><br><button class="btn ghost sm" data-ver="${esc(s.id)}" data-st="${s.status==='Verified'?'Pending':'Verified'}">${s.status==='Verified'?'Undo':'Verify'}</button></td></tr>`).join('')
+    (sorted.length ? sorted.map(s => `<tr><td>${esc(s.timestamp)}</td><td><small>${esc(s.id)}</small></td><td><b>${esc(s.doctor)}</b></td><td>${esc(monthLabel(s.period))}</td><td class="num">${s.morning} / ${s.afternoon} / ${s.night}</td><td class="num">${s.hours}</td><td>${covById[s.id] ? `<ul class="plist">${covById[s.id].map(c=>`<li>${c.recordedBy==='Covering doctor' ? `Covered <b>${esc(c.owner)}</b>` : `Covered by <b>${esc(c.by)}</b>`}<br><small>${esc(c.shift)} · ${esc(c.date)} · ${c.hours} hrs</small></li>`).join('')}</ul>` : '<small style="color:var(--muted)">None</small>'}</td><td>${(byId[s.id]||[]).length ? `<ul class="plist">${byId[s.id].sort((a,b)=>a.date.localeCompare(b.date)).map(x=>`<li><b>${esc(x.procedure)}</b><br><small>${esc(x.date)} · ${esc(x.pid)} · ${esc(x.patient)}</small><br>${preauthCell(x)}</li>`).join('')}</ul>` : '<small style="color:var(--muted)">None</small>'}</td><td><span class="pill ${s.status==='Verified'?'v':'p'}">${esc(s.status)}</span><br><button class="btn ghost sm" data-ver="${esc(s.id)}" data-st="${s.status==='Verified'?'Pending':'Verified'}">${s.status==='Verified'?'Undo':'Verify'}</button></td></tr>`).join('')
       : `<tr><td colspan="9" style="text-align:center;color:var(--muted);padding:28px">No entries for this filter.</td></tr>`) + '</tbody>';
   renderCovers();
   $('#logTable').querySelectorAll('[data-ver]').forEach(b => b.onclick = async () => {
@@ -1038,6 +1124,12 @@ function renderAll(){
     const s = DATA.submissions.find(x => x.id === b.dataset.ver); if (s) s.status = b.dataset.st;
     renderAll();
   });
+}
+
+const safeUrl = u => /^https:\/\//.test(u) ? u : '#';
+function preauthCell(x){
+  if (!needsPreauth(x.procedure)) return '<small style="color:var(--muted)">No preauth needed</small>';
+  return x.preauth ? `<a href="${esc(safeUrl(x.preauth))}" target="_blank" rel="noopener">View preauth ↗</a>` : '<span class="pill p">No preauth</span>';
 }
 
 /* shift covers tab */
@@ -1091,10 +1183,10 @@ $('#csvSum').onclick = () => { const {subs,procs} = filtered(); const s = summar
   downloadCSV(`payroll-summary_${tag()}.csv`, [['Doctor','Month','Morning','Afternoon','Night','Hours','Shifts covered for them','Covers they did',...PROCS,'Shift pay (NGN)','Procedure pay (NGN)','Total payout (NGN)']]
     .concat(s.map(g => [g.doctor, monthLabel(g.period), g.morning, g.afternoon, g.night, g.hours, g.outN, g.inN, ...PROCS.map(p=>g.proc[p]), g.shiftPay, g.procPay, g.total]))); };
 $('#csvLog').onclick = () => { const {subs,procs} = filtered(); const byId = {}; procs.forEach(x => (byId[x.id]=byId[x.id]||[]).push(x));
-  const rows = [['Submitted','Ref','Doctor','Month','Morning','Afternoon','Night','Hours','Status','Procedure date','Patient PID','Patient name','Procedure']];
+  const rows = [['Submitted','Ref','Doctor','Month','Morning','Afternoon','Night','Hours','Status','Procedure date','Patient PID','Patient name','Procedure','Preauthorization']];
   subs.slice().sort((a,b)=>String(a.timestamp).localeCompare(String(b.timestamp))).forEach(s => {
     const base = [s.timestamp, s.id, s.doctor, monthLabel(s.period), s.morning, s.afternoon, s.night, s.hours, s.status];
-    (byId[s.id]||[null]).forEach(x => rows.push(base.concat(x ? [x.date, x.pid, x.patient, x.procedure] : ['','','',''])));
+    (byId[s.id]||[null]).forEach(x => rows.push(base.concat(x ? [x.date, x.pid, x.patient, x.procedure, x.preauth || (needsPreauth(x.procedure) ? 'MISSING' : 'Not needed')] : ['','','','',''])));
   });
   downloadCSV(`master-log_${tag()}.csv`, rows); };
 
@@ -1114,7 +1206,7 @@ function openSlip(g){
       </tbody></table>
       <div class="total"><span>Total payout due</span><span>${naira(g.total)}</span></div>
       ${g.covers.length ? `<div class="sec">Shift covers (already reflected above · rostered: ${g.rostered.morning} morning, ${g.rostered.afternoon} afternoon, ${g.rostered.night} night, ${g.rostered.hours} hrs)</div><table><thead><tr><th>Date</th><th>Shift</th><th>Detail</th><th class="num">Hours</th></tr></thead><tbody>${g.covers.sort((a,b)=>a.date.localeCompare(b.date)).map(c=>`<tr><td>${esc(c.date)}</td><td>${esc(c.shift)}</td><td>${c.dir==='out' ? 'Covered by ' + esc(c.by) + ' (deducted)' : 'Covered for ' + esc(c.owner) + ' (added)'}</td><td class="num">${c.dir==='out'?'−':'+'}${c.hours}</td></tr>`).join('')}</tbody></table>` : ''}
-      ${plist.length ? `<div class="sec">Procedure details</div><table><thead><tr><th>Date</th><th>Patient PID</th><th>Patient name</th><th>Procedure</th></tr></thead><tbody>${plist.map(x=>`<tr><td>${esc(x.date)}</td><td>${esc(x.pid)}</td><td>${esc(x.patient)}</td><td>${esc(x.procedure)}</td></tr>`).join('')}</tbody></table>` : ''}
+      ${plist.length ? `<div class="sec">Procedure details</div><table><thead><tr><th>Date</th><th>Patient PID</th><th>Patient name</th><th>Procedure</th><th>Preauth</th></tr></thead><tbody>${plist.map(x=>`<tr><td>${esc(x.date)}</td><td>${esc(x.pid)}</td><td>${esc(x.patient)}</td><td>${esc(x.procedure)}</td><td>${!needsPreauth(x.procedure) ? 'Not needed' : x.preauth ? `<a href="${esc(safeUrl(x.preauth))}" target="_blank" rel="noopener">✓ View</a>` : '<b style="color:#B42318">Missing</b>'}</td></tr>`).join('')}</tbody></table>` : ''}
       ${g.pending && !v ? `<p style="color:#8A3B12;font-size:13px">Note: ${g.pending} of ${g.subs} submission(s) for this period are not yet verified.</p>` : ''}
       <div class="sign"><div>Doctor's signature</div><div>Verified by</div><div>Accounts</div></div>
       <p style="color:var(--muted);font-size:11px;margin-top:18px">Generated ${esc(new Date().toLocaleString('en-GB'))}. Confidential: contains patient identifiers.</p>
